@@ -8,6 +8,9 @@ RetroArch `.srm` format. Current CLI commands:
 
 - `list <CARD.gme|CARD.srm>` — list saves as a Unicode table with slot numbers, save names, titles, regions, block counts, payload sizes, and free slots.
 - `convert <INPUT.gme> <OUTPUT.srm>` — validate a DexDrive `.gme` file and write its raw payload as `.srm`.
+- `import <CARD.srm> <SOURCE.gme> <SAVE-NAME>` — copy a named save from a `.gme` file into a `.srm` card.
+- `delete <CARD.srm> <SLOT-OR-SAVE>` — delete a save from a `.srm` card by slot number or save name.
+- `install <SOURCE.srm>` — install a `.srm` card into the configured RetroArch saves directory.
 - `--version` / `-V` — print the package version and exit.
 
 The current package version is `0.1.0`; keep the root package versions in `Cargo.toml` and `Cargo.lock` in sync.
@@ -19,10 +22,13 @@ material, not part of the build.
 
 ## Repository map
 
-- `src/main.rs` — Clap CLI, command dispatch, `.gme`/raw input detection, and atomic output writes.
+- `src/main.rs` — Clap CLI, command dispatch, `.gme`/raw input detection, interactive prompts, and atomic output writes.
 - `src/commands/list.rs` — Unicode table rendering and byte-size formatting for `list`.
 - `src/gme.rs` — DexDrive `.gme` header parsing, headerless fallback, and comment decoding.
-- `src/ps1/card.rs` — raw card parsing, slot/link chains, region names, XOR warnings, and save summaries.
+- `src/install.rs` — RetroArch saves-directory config and `.srm` discovery for `install`.
+- `src/ps1/card.rs` — raw card parsing, slot/link chains, region names, XOR warnings, save summaries, and slot formatting shared by delete and overwrite imports.
+- `src/ps1/delete.rs` — save deletion by slot number or save name from a target raw image.
+- `src/ps1/import.rs` — save imports from a source card into a target raw image.
 - `src/ps1/title.rs` — Shift-JIS save-title decoding.
 - `src/lib.rs` — crate modules and public exports.
 - `save-games/README.md` — inventory and contribution guidance for community-shared `.gme` saves in `save-games/`.
@@ -45,6 +51,8 @@ After changing code, rebuild the executable being invoked. For example, `cargo b
 
 - Never use the user's only save as a test target. Make a temporary copy under `/tmp/opencode/` for integration tests.
 - The convert command stages output in a temporary file, refuses to overwrite existing outputs, and only persists after validation.
+- The import command stages the updated card in a temporary file, re-validates it, and only then replaces the target.
+- The delete command uses the same staged replace flow. The install command backs up the overwritten card before replacing it in place.
 - Recommend an independent backup before converting over anything important.
 
 ## Card invariants

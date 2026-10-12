@@ -67,6 +67,16 @@ NUL-terminated on an even byte boundary. JAPS1ME decodes it with a
 malformed-sequence replacement and falls back to the save name
 (`region + product code + identifier`) when no usable title exists.
 
+### Imports
+
+`import` copies a save's directory frames and data blocks from a source card
+into the target's first free slots in slot order. Link bytes are relinked
+(`0x51` initial, `0x52` middle, `0x53` end, `0xFF`-terminated), the initial
+frame's size field is recomputed as `blocks * 8192`, and each touched frame's
+XOR checksum is regenerated. Imports from a deleted source slot are normalized
+to active link types. The updated card is re-parsed before it replaces the
+target.
+
 ## References
 
 - [MemcardRex](https://github.com/ShendoXT/memcardrex): `MemcardRex.Core/ps1card.cs`

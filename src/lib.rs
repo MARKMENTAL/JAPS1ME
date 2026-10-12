@@ -6,9 +6,12 @@
 
 pub mod commands;
 pub mod gme;
+pub mod install;
 pub mod ps1;
 
 pub use commands::list::{format_save_table, format_size};
 pub use gme::{parse_gme, GmeCard, GME_FILE_LEN, GME_HEADER_LEN, RAW_CARD_LEN};
 pub use ps1::card::{parse_raw, CardSummary, SlotInfo, SlotType};
+pub use ps1::delete::{delete_save, DeleteReport};
+pub use ps1::import::{import_save, import_save_overwrite, ImportReport};
 pub use ps1::title::decode_title;

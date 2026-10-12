@@ -21,9 +21,9 @@ pub const DIR_FRAME_LEN: usize = 128;
 /// Length of one save data block.
 pub const SAVE_BLOCK_LEN: usize = 8192;
 /// Offset of the directory frames in the raw image.
-const DIR_FRAMES_OFFSET: usize = 128;
+pub(crate) const DIR_FRAMES_OFFSET: usize = 128;
 /// Offset of the save data blocks in the raw image.
-const SAVE_DATA_OFFSET: usize = 8192;
+pub(crate) const SAVE_DATA_OFFSET: usize = 8192;
 
 /// Classification of a directory-frame slot.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,11 +52,11 @@ impl SlotType {
         }
     }
 
-    fn is_initial(self) -> bool {
+    pub(crate) fn is_initial(self) -> bool {
         matches!(self, Self::Initial | Self::DeletedInitial)
     }
 
-    fn is_link(self) -> bool {
+    pub(crate) fn is_link(self) -> bool {
         matches!(
             self,
             Self::MiddleLink | Self::EndLink | Self::DeletedMiddleLink | Self::DeletedEndLink
@@ -71,12 +71,22 @@ impl SlotType {
     }
 }
 
-struct DirFrame {
-    slot_type: SlotType,
-    next: u8,
-    region_raw: String,
-    product_code: String,
-    identifier: String,
+pub(crate) struct DirFrame {
+    pub(crate) slot_type: SlotType,
+    pub(crate) next: u8,
+    pub(crate) region_raw: String,
+    pub(crate) product_code: String,
+    pub(crate) identifier: String,
+}
+
+impl DirFrame {
+    /// Save name (`region + product code + identifier`).
+    pub(crate) fn save_name(&self) -> String {
+        format!(
+            "{}{}{}",
+            self.region_raw, self.product_code, self.identifier
+        )
+    }
 }
 
 /// One save (an initial slot plus its linked blocks).
@@ -107,37 +117,7 @@ pub struct CardSummary {
 
 /// Parse a 131072-byte raw card image.
 pub fn parse_raw(raw: &[u8]) -> Result<CardSummary> {
-    if raw.len() != RAW_CARD_LEN {
-        bail!(
-            "not a raw PS1 card image: expected {} bytes, found {}",
-            RAW_CARD_LEN,
-            raw.len()
-        );
-    }
-    if raw[0] != b'M' || raw[1] != b'C' {
-        bail!("not a raw PS1 card image: missing MC signature");
-    }
-
-    let mut frames = Vec::with_capacity(SLOT_COUNT);
-    let mut warnings = Vec::new();
-    for slot in 0..SLOT_COUNT {
-        let start = DIR_FRAMES_OFFSET + slot * DIR_FRAME_LEN;
-        let frame = &raw[start..start + DIR_FRAME_LEN];
-        let mut xor = 0u8;
-        for byte in &frame[..DIR_FRAME_LEN - 1] {
-            xor ^= byte;
-        }
-        if xor != frame[DIR_FRAME_LEN - 1] {
-            warnings.push(format!("slot {}: directory checksum mismatch", slot + 1));
-        }
-        frames.push(DirFrame {
-            slot_type: SlotType::from_byte(frame[0]),
-            next: frame[8],
-            region_raw: decode_ascii(&frame[10..12]),
-            product_code: decode_ascii(&frame[12..22]),
-            identifier: decode_ascii(&frame[22..30]),
-        });
-    }
+    let (frames, mut warnings) = read_frames(raw)?;
 
     // Follow link chains from each initial slot.
     let mut reachable = [false; SLOT_COUNT];
@@ -151,10 +131,7 @@ pub fn parse_raw(raw: &[u8]) -> Result<CardSummary> {
             reachable[linked] = true;
         }
         let frame = &frames[slot];
-        let save_name = format!(
-            "{}{}{}",
-            frame.region_raw, frame.product_code, frame.identifier
-        );
+        let save_name = frame.save_name();
         let data_start = SAVE_DATA_OFFSET + slot * SAVE_BLOCK_LEN;
         let title_field = &raw[data_start + 4..data_start + 4 + crate::ps1::title::TITLE_LEN];
         let game_title = decode_title(title_field).unwrap_or_else(|| save_name.clone());
@@ -191,8 +168,66 @@ pub fn parse_raw(raw: &[u8]) -> Result<CardSummary> {
     })
 }
 
+/// Reset slots to formatted (frames plus zeroed data blocks), like
+/// MemcardRex `FormatSave`. Freed slots read as free on re-parse.
+pub(crate) fn format_slots(raw: &mut [u8], chain: &[usize]) {
+    for &slot in chain {
+        let frame = DIR_FRAMES_OFFSET + slot * DIR_FRAME_LEN;
+        raw[frame..frame + DIR_FRAME_LEN].fill(0);
+        raw[frame] = 0xA0;
+        raw[frame + 8] = 0xFF;
+        raw[frame + 9] = 0xFF;
+        let mut xor = 0u8;
+        for byte in &raw[frame..frame + DIR_FRAME_LEN - 1] {
+            xor ^= *byte;
+        }
+        raw[frame + DIR_FRAME_LEN - 1] = xor;
+        let data = SAVE_DATA_OFFSET + slot * SAVE_BLOCK_LEN;
+        raw[data..data + SAVE_BLOCK_LEN].fill(0);
+    }
+}
+
+/// Read and validate the 15 directory frames of a raw card image.
+///
+/// Returns the frames plus non-fatal checksum warnings. Length and `MC`
+/// signature failures are hard errors.
+pub(crate) fn read_frames(raw: &[u8]) -> Result<(Vec<DirFrame>, Vec<String>)> {
+    if raw.len() != RAW_CARD_LEN {
+        bail!(
+            "not a raw PS1 card image: expected {} bytes, found {}",
+            RAW_CARD_LEN,
+            raw.len()
+        );
+    }
+    if raw[0] != b'M' || raw[1] != b'C' {
+        bail!("not a raw PS1 card image: missing MC signature");
+    }
+
+    let mut frames = Vec::with_capacity(SLOT_COUNT);
+    let mut warnings = Vec::new();
+    for slot in 0..SLOT_COUNT {
+        let start = DIR_FRAMES_OFFSET + slot * DIR_FRAME_LEN;
+        let frame = &raw[start..start + DIR_FRAME_LEN];
+        let mut xor = 0u8;
+        for byte in &frame[..DIR_FRAME_LEN - 1] {
+            xor ^= byte;
+        }
+        if xor != frame[DIR_FRAME_LEN - 1] {
+            warnings.push(format!("slot {}: directory checksum mismatch", slot + 1));
+        }
+        frames.push(DirFrame {
+            slot_type: SlotType::from_byte(frame[0]),
+            next: frame[8],
+            region_raw: decode_ascii(&frame[10..12]),
+            product_code: decode_ascii(&frame[12..22]),
+            identifier: decode_ascii(&frame[22..30]),
+        });
+    }
+    Ok((frames, warnings))
+}
+
 /// Follow a save's link chain, with bounds mirroring MemcardRex `FindSaveLinks`.
-fn find_links(frames: &[DirFrame], start: usize) -> Vec<usize> {
+pub(crate) fn find_links(frames: &[DirFrame], start: usize) -> Vec<usize> {
     let mut chain = vec![start];
     let mut current = start;
     for _ in 0..SLOT_COUNT {
