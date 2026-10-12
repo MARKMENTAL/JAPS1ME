@@ -1,0 +1,21 @@
+[package]
+name = "japs1me"
+version = "0.1.0"
+edition = "2021"
+description = "JAPS1ME - PS1 RetroArch Save Converter (DexDrive .gme to RetroArch .srm)"
+license = "GPL-3.0-or-later"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+encoding_rs = "0.8"
+unicode-width = "0.2"
+tempfile = "3"
+
+[[bin]]
+name = "japs1me"
+path = "src/main.rs"
+
+[lib]
+name = "japs1me"
+path = "src/lib.rs"
