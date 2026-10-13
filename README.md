@@ -126,7 +126,9 @@ cargo build --release
 
 ## License
 
-JAPS1ME is licensed under the **GNU General Public License, version 3 or (at your option) any later version** (SPDX: `GPL-3.0-or-later`). This project license does not automatically apply to the individual save files in `save-games/`; see that directory's README for contribution and attribution guidance.
+Copyright (C) 2026 Mark Robillard Jr (MARKMENTAL).
+
+JAPS1ME is licensed under the **GNU General Public License, version 3 or (at your option) any later version** (SPDX: `GPL-3.0-or-later`). See [LICENSE](LICENSE) for the full text. This project license does not automatically apply to the individual save files in `save-games/`; see that directory's README for contribution and attribution guidance.
 
 ## Acknowledgements
 
