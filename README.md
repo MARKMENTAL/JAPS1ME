@@ -6,6 +6,10 @@ DexDrive (`.gme`) card images to RetroArch (`.srm`) format, lists the saves on
 `.gme` and raw (`.srm`/`.mcr`) card images, and imports, deletes, and installs
 saves and cards.
 
+| Made for | Developed on |
+| --- | --- |
+| ![Linux](https://img.shields.io/badge/Linux-%23FFF.svg?style=for-the-badge&logo=linux&logoColor=black) | ![Debian](https://img.shields.io/badge/Debian-%23D70A53.svg?style=for-the-badge&logo=debian&logoColor=white) |
+
 ## Features
 
 - Convert DexDrive `.gme` files (including headerless/zeroed-header variants) to RetroArch `.srm` with validated stripping.
@@ -133,3 +137,4 @@ JAPS1ME is licensed under the **GNU General Public License, version 3 or (at you
 ## Acknowledgements
 
 Thanks to [ShendoXT and the MemcardRex project](https://github.com/ShendoXT/memcardrex), an advanced PlayStation 1 memory-card editor. Its implementation provided a valuable technical reference for understanding the PS1 memory-card and DexDrive formats.
+
