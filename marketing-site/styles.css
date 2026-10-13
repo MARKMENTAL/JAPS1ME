@@ -85,7 +85,8 @@ a:hover { color: #fff; text-decoration: underline; }
 h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.05; margin: 0 0 1rem; }
 .gradient-text { background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lede { color: #d4d4d8; max-width: 36rem; }
-.hero-cta { display: flex; gap: .75rem; flex-wrap: wrap; margin: 1.5rem 0; }
+.hero-cta { display: flex; gap: .75rem; flex-wrap: wrap; margin: 1.5rem 0 .5rem; }
+.alt-link { color: var(--muted); font-size: .9rem; margin: 0 0 1rem; }
 .meta { color: var(--muted); font-size: .85rem; }
 
 .terminal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 1.5rem; }
@@ -124,6 +125,19 @@ h2 { font-size: 1.8rem; margin: 0 0 .25rem; }
 .cards p { margin: 0; color: #d4d4d8; font-size: .95rem; }
 .cards code { color: var(--gold); }
 
+/* Download */
+.download-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.5rem; }
+.dl-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; min-width: 0; }
+.dl-card h3 { margin: 0 0 .25rem; }
+.dl-card p { margin: .6rem 0; }
+.os-badge { display: inline-block; font-size: .8rem; font-weight: 700; letter-spacing: .04em; color: #fff; background: var(--border); border-radius: 999px; padding: .25rem .8rem; border: 1px solid var(--muted); }
+.os-badge.linux { border-color: var(--gold); }
+.os-badge.windows { border-color: var(--blue); }
+.dl-meta { color: var(--muted); font-size: .85rem; }
+.dl-meta code, .dl-verify code { color: var(--gold); }
+.dl-label { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 0; }
+.dl-verify { color: var(--muted); font-size: .85rem; }
+
 /* Tabs */
 .tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1.5rem 0 1rem; }
 .tabs button { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: .5rem 1rem; cursor: pointer; }
@@ -158,6 +172,7 @@ footer { border-top: 1px solid var(--border); padding: 2rem 0 0; }
 @media (max-width: 860px) {
   .hero-grid { grid-template-columns: 1fr; }
   .cards { grid-template-columns: 1fr; }
+  .download-cards { grid-template-columns: 1fr; }
   .strip-grid { grid-template-columns: 1fr 1fr; }
   .nav-links { display: none; }
   .nav-toggle { display: block; }

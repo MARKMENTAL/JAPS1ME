@@ -24,6 +24,11 @@ static files.
   counters), FAQ, footer, `860px` + `480px` breakpoints,
   `prefers-reduced-motion` handling.
 - `README.md` — this file.
+- `JAPS1ME-v0.1.0-Linux-x86_64.tar.gz` + `JAPS1ME-v0.1.0-Windows-x86_64.zip`
+  — prebuilt v0.1.0 binaries served as relative `./` downloads by the
+  `#download` section. Their SHA-256 hashes are embedded in the page;
+  re-run `sha256sum` on both files after replacing them and update the
+  page + this list.
 
 ## Favicon
 

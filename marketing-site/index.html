@@ -20,6 +20,7 @@
       </a>
       <nav class="nav-links" aria-label="Primary">
         <a href="#features">Features</a>
+        <a href="#download">Download</a>
         <a href="#commands">Commands</a>
         <a href="#safety">Safety</a>
         <a href="#install">Getting Started</a>
@@ -32,6 +33,7 @@
     </div>
     <div id="mobile-menu" class="wrap mobile-menu" x-show="open" x-collapse x-cloak>
       <a href="#features" @click="open = false">Features</a>
+      <a href="#download" @click="open = false">Download</a>
       <a href="#commands" @click="open = false">Commands</a>
       <a href="#safety" @click="open = false">Safety</a>
       <a href="#install" @click="open = false">Getting Started</a>
@@ -50,11 +52,12 @@
           <p class="lede">A fast Rust CLI for managing PlayStation 1 memory-card saves for RetroArch-style emulators. Convert whole cards, browse saves, import, delete, and install — with staged, validated writes.</p>
           <p class="early-note">Early development: commands and output may change. Back up your saves before use.</p>
           <div class="hero-cta">
-            <a class="btn btn-primary" href="https://github.com/MARKMENTAL/JAPS1ME" target="_blank" rel="noopener">View on GitHub</a>
+            <a class="btn btn-primary" href="#download">Download v0.1.0</a>
             <a class="btn btn-secondary" href="#install">Get started</a>
           </div>
-          <div class="terminal" x-data="{ copied: false, text: 'cargo build --release' }">
-            <div class="term-bar"><span class="term-title">japs1me — terminal</span><span class="win-controls" aria-hidden="true"><span class="win-btn min">−</span><span class="win-btn max">□</span><span class="win-btn close">×</span></span></div>
+          <p class="alt-link">Prefer source? <a href="https://github.com/MARKMENTAL/JAPS1ME" target="_blank" rel="noopener">View on GitHub →</a></p>
+          <div class="terminal" x-data="{ copied: false, text: 'git clone https://github.com/MARKMENTAL/JAPS1ME' }">
+            <div class="term-bar"><span class="term-title">japs1me — get the source</span><span class="win-controls" aria-hidden="true"><span class="win-btn min">−</span><span class="win-btn max">□</span><span class="win-btn close">×</span></span></div>
             <div class="term-body">
               <code>$ <span x-text="text"></span></code>
               <button type="button" @click="navigator.clipboard.writeText(text).then(() => { copied = true; setTimeout(() => copied = false, 1500); })" x-text="copied ? 'Copied!' : 'Copy'"></button>
@@ -86,6 +89,34 @@ Free: 9 of 15 slots</code></pre>
         <div><strong>.srm 131072 B</strong><span>raw card, starts with MC</span></div>
         <div><strong>15 slots</strong><span>8192 B blocks, link chains</span></div>
         <div><strong>Shift-JIS</strong><span>titles decoded, XOR-checked</span></div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD -->
+    <section id="download" class="section section-alt">
+      <div class="wrap" x-data="{ copied: '' }">
+        <h2>Download</h2>
+        <p class="section-sub">Preferred way to get JAPS1ME <code>v0.1.0</code> — prebuilt x86_64 binaries. Verify the checksum before running.</p>
+        <div class="download-cards">
+          <article class="dl-card">
+            <p><span class="os-badge linux">Linux x86_64</span></p>
+            <h3>JAPS1ME v0.1.0</h3>
+            <p class="dl-meta"><code>JAPS1ME-v0.1.0-Linux-x86_64.tar.gz</code> · 671912 B (656.2 KiB)</p>
+            <p><a class="btn btn-secondary" href="./JAPS1ME-v0.1.0-Linux-x86_64.tar.gz" download>Download .tar.gz</a></p>
+            <p class="dl-label">SHA-256</p>
+            <div class="cmd"><code>670ace30eb11872c5b316dc90160a2f2f243359b725f62a5fa756594fb52900c</code><button @click="navigator.clipboard.writeText('670ace30eb11872c5b316dc90160a2f2f243359b725f62a5fa756594fb52900c').then(() => { copied = 'linux'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'linux' ? 'Copied!' : 'Copy'"></button></div>
+            <p class="dl-verify">Verify: <code>sha256sum JAPS1ME-v0.1.0-Linux-x86_64.tar.gz</code></p>
+          </article>
+          <article class="dl-card">
+            <p><span class="os-badge windows">Windows x86_64</span></p>
+            <h3>JAPS1ME v0.1.0</h3>
+            <p class="dl-meta"><code>JAPS1ME-v0.1.0-Windows-x86_64.zip</code> · 507233 B (495.3 KiB)</p>
+            <p><a class="btn btn-secondary" href="./JAPS1ME-v0.1.0-Windows-x86_64.zip" download>Download .zip</a></p>
+            <p class="dl-label">SHA-256</p>
+            <div class="cmd"><code>bbf15c700ad41b1af8bb2ed658461cabe7aabd2dc053fad7cf6992977c37a558</code><button @click="navigator.clipboard.writeText('bbf15c700ad41b1af8bb2ed658461cabe7aabd2dc053fad7cf6992977c37a558').then(() => { copied = 'windows'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'windows' ? 'Copied!' : 'Copy'"></button></div>
+            <p class="dl-verify">Verify: <code>certutil -hashfile JAPS1ME-v0.1.0-Windows-x86_64.zip SHA256</code></p>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -160,7 +191,7 @@ Free: 9 of 15 slots</code></pre>
     <section id="install" class="section section-alt">
       <div class="wrap">
         <h2>Getting Started</h2>
-        <p class="section-sub">You need <code>git</code> plus a Rust toolchain with <code>Cargo</code>. Four steps, copy-paste friendly.</p>
+        <p class="section-sub">Preferred: grab a prebuilt <code>v0.1.0</code> from <a href="#download">Download</a> above. Otherwise build from source — you need <code>git</code> plus a Rust toolchain with <code>Cargo</code>. Four steps, copy-paste friendly.</p>
         <ol class="steps">
           <li><strong>Clone the repo</strong><br /><code>git clone https://github.com/MARKMENTAL/JAPS1ME</code><br /><code>cd JAPS1ME</code></li>
           <li><strong>Build the release binary</strong><br /><code>cargo build --release</code> — binary lands at <code>target/release/japs1me</code>.</li>
@@ -198,6 +229,10 @@ Free: 9 of 15 slots</code></pre>
           <div class="faq-item">
             <button @click="open = open === 4 ? null : 4" :aria-expanded="open === 4">Headerless .gme files?<span>+</span></button>
             <div x-show="open === 4" x-cloak><p>Accepted with a warning — the documented exception. Length, <code>MC</code> signature, and checksums are otherwise strictly validated.</p></div>
+          </div>
+          <div class="faq-item">
+            <button @click="open = open === 5 ? null : 5" :aria-expanded="open === 5">Why is there no GUI?<span>+</span></button>
+            <div x-show="open === 5" x-cloak><p>Deliberate. JAPS1ME follows the Unix philosophy: small, composable commands (<code>list</code>, <code>convert</code>, <code>import</code>, <code>delete</code>, <code>install</code>) focused on one task, done well with the least ceremony. Plain-text output pipes and scripts cleanly; a GUI would add bulk without helping the per-game RetroArch card workflow.</p></div>
           </div>
         </div>
       </div>
