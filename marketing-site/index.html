@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JAPS1ME — Just A PS1 Memory Card Editor</title>
+  <meta name="description" content="JAPS1ME converts DexDrive .gme cards to RetroArch .srm, lists saves, imports, deletes, and installs PS1 memory-card saves." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='7' y='7' width='18' height='18' fill='none' stroke='%23767ee1' stroke-width='4'/%3E%3C/svg%3E" />
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav" x-data="{ open: false }">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top" aria-label="JAPS1ME home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-text">JAPS1ME</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#commands">Commands</a>
+        <a href="#safety">Safety</a>
+        <a href="#install">Getting Started</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-github" href="https://github.com/MARKMENTAL/JAPS1ME" target="_blank" rel="noopener">GitHub</a>
+        <button class="nav-toggle" type="button" @click="open = !open" :aria-expanded="open" aria-controls="mobile-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+    <div id="mobile-menu" class="wrap mobile-menu" x-show="open" x-collapse x-cloak>
+      <a href="#features" @click="open = false">Features</a>
+      <a href="#commands" @click="open = false">Commands</a>
+      <a href="#safety" @click="open = false">Safety</a>
+      <a href="#install" @click="open = false">Getting Started</a>
+      <a href="#faq" @click="open = false">FAQ</a>
+      <a href="https://github.com/MARKMENTAL/JAPS1ME" target="_blank" rel="noopener">GitHub →</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero" id="top">
+      <div class="wrap hero-grid">
+        <div>
+          <p class="eyebrow">PS1 · DexDrive .gme → RetroArch .srm</p>
+          <h1><span class="gradient-text">JAPS1ME</span><br />Just A PS1<br />Memory Card Editor</h1>
+          <p class="lede">A fast Rust CLI for managing PlayStation 1 memory-card saves for RetroArch-style emulators. Convert whole cards, browse saves, import, delete, and install — with staged, validated writes.</p>
+          <p class="early-note">Early development: commands and output may change. Back up your saves before use.</p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="https://github.com/MARKMENTAL/JAPS1ME" target="_blank" rel="noopener">View on GitHub</a>
+            <a class="btn btn-secondary" href="#install">Get started</a>
+          </div>
+          <div class="terminal" x-data="{ copied: false, text: 'cargo build --release' }">
+            <div class="term-bar"><span class="term-title">japs1me — terminal</span><span class="win-controls" aria-hidden="true"><span class="win-btn min">−</span><span class="win-btn max">□</span><span class="win-btn close">×</span></span></div>
+            <div class="term-body">
+              <code>$ <span x-text="text"></span></code>
+              <button type="button" @click="navigator.clipboard.writeText(text).then(() => { copied = true; setTimeout(() => copied = false, 1500); })" x-text="copied ? 'Copied!' : 'Copy'"></button>
+            </div>
+          </div>
+          <p class="meta">GPL-3.0-or-later · Rust · Linux / Debian</p>
+        </div>
+        <div>
+          <div class="hero-card" aria-label="Example per-game card listing">
+          <div class="hero-card-head">Pro Evolution Soccer 2 (Europe).srm — 3 saves</div>
+          <pre><code>SLOT  SAVE NAME              BLOCKS      SIZE
+1     BESLES-03946PES-OPT    2      16.0 KiB
+3     BESLES-03946PES-D2A    2      16.0 KiB
+5     BESLES-03946PES-D1A    2      16.0 KiB
+
+Free: 9 of 15 slots</code></pre>
+          <p class="hero-card-note">Single-game card — .srm name matches the .cue</p>
+          <div class="gradient-bar" aria-hidden="true"></div>
+          </div>
+          <p class="hero-version"><span class="version-badge">v0.1.0 — early development</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FORMAT STRIP -->
+    <section class="strip" aria-label="Card facts">
+      <div class="wrap strip-grid">
+        <div><strong>.gme 134976 B</strong><span>3904 B header + raw card</span></div>
+        <div><strong>.srm 131072 B</strong><span>raw card, starts with MC</span></div>
+        <div><strong>15 slots</strong><span>8192 B blocks, link chains</span></div>
+        <div><strong>Shift-JIS</strong><span>titles decoded, XOR-checked</span></div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features" class="section">
+      <div class="wrap">
+        <h2>What it does</h2>
+        <p class="section-sub">Five commands. No GUI, no surprises.</p>
+        <div class="cards">
+          <article><h3>Convert</h3><p>Validate a DexDrive <code>.gme</code> (including headerless variants) and write its raw 131072-byte payload as <code>.srm</code>. Never overwrites.</p></article>
+          <article><h3>List</h3><p>Browse <code>.gme</code> and raw <code>.srm</code> cards: slot, save name, Shift-JIS title, region, blocks, payload size, free slots.</p></article>
+          <article><h3>Import</h3><p>Copy one named save from <code>.gme</code> into <code>.srm</code>. Duplicate + free-space checks, staged + re-validated replace.</p></article>
+          <article><h3>Delete</h3><p>Delete by slot number or exact save name. Slots reset to formatted with fresh checksums.</p></article>
+          <article><h3>Install</h3><p>Install a <code>.srm</code> into your RetroArch saves dir. Remembers the dir, backs up the replaced card.</p></article>
+          <article><h3>Safety first</h3><p>Read-only listing and checksums. Convert refuses to overwrite. Import/delete stage to temp files first.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMANDS -->
+    <section id="commands" class="section section-alt">
+      <div class="wrap" x-data="{ tab: 'convert', copied: '' }">
+        <h2>Commands</h2>
+        <p class="section-sub">Pick a command, copy the example.</p>
+        <div class="tabs" role="tablist" aria-label="Commands">
+          <button role="tab" :aria-selected="tab === 'list'" :class="tab === 'list' && 'active'" @click="tab = 'list'">list</button>
+          <button role="tab" :aria-selected="tab === 'convert'" :class="tab === 'convert' && 'active'" @click="tab = 'convert'">convert</button>
+          <button role="tab" :aria-selected="tab === 'import'" :class="tab === 'import' && 'active'" @click="tab = 'import'">import</button>
+          <button role="tab" :aria-selected="tab === 'delete'" :class="tab === 'delete' && 'active'" @click="tab = 'delete'">delete</button>
+          <button role="tab" :aria-selected="tab === 'install'" :class="tab === 'install' && 'active'" @click="tab = 'install'">install</button>
+        </div>
+
+        <div class="tab-panels">
+          <div x-show="tab === 'list'" x-cloak>
+            <p>List saves and free slots. Accepts <code>.gme</code> and raw images, detected by size + <code>MC</code> signature.</p>
+            <div class="cmd"><code>japs1me list save-games/pro-evolution-soccer-2.22507.gme</code><button @click="navigator.clipboard.writeText('japs1me list save-games/pro-evolution-soccer-2.22507.gme').then(() => { copied = 'list'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'list' ? 'Copied!' : 'Copy'"></button></div>
+          </div>
+          <div x-show="tab === 'convert'" x-cloak>
+            <p>Convert DexDrive <code>.gme</code> to RetroArch <code>.srm</code>. Refuses to overwrite an existing output.</p>
+            <div class="cmd"><code>japs1me convert save-games/pro-evolution-soccer-2.22507.gme pes2.srm</code><button @click="navigator.clipboard.writeText('japs1me convert save-games/pro-evolution-soccer-2.22507.gme pes2.srm').then(() => { copied = 'convert'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'convert' ? 'Copied!' : 'Copy'"></button></div>
+          </div>
+          <div x-show="tab === 'import'" x-cloak>
+            <p>Import one save by exact name from <code>.gme</code> into <code>.srm</code>. Prompts <code>y/n</code> on duplicates (interactive terminals only).</p>
+            <div class="cmd"><code>japs1me import pes2.srm save-games/pro-evolution-soccer-2.22507.gme BESLES-03946PES-OPT</code><button @click="navigator.clipboard.writeText('japs1me import pes2.srm save-games/pro-evolution-soccer-2.22507.gme BESLES-03946PES-OPT').then(() => { copied = 'import'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'import' ? 'Copied!' : 'Copy'"></button></div>
+          </div>
+          <div x-show="tab === 'delete'" x-cloak>
+            <p>Delete by 1-based slot number or exact save name. <code>.srm</code> targets only.</p>
+            <div class="cmd"><code>japs1me delete pes2.srm BESLES-03946PES-OPT</code><button @click="navigator.clipboard.writeText('japs1me delete pes2.srm BESLES-03946PES-OPT').then(() => { copied = 'delete'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'delete' ? 'Copied!' : 'Copy'"></button></div>
+          </div>
+          <div x-show="tab === 'install'" x-cloak>
+            <p>Install a <code>.srm</code> into the configured RetroArch saves dir. Backs up the overwritten card first.</p>
+            <div class="cmd"><code>japs1me install pes2.srm</code><button @click="navigator.clipboard.writeText('japs1me install pes2.srm').then(() => { copied = 'install'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'install' ? 'Copied!' : 'Copy'"></button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SAFETY -->
+    <section id="safety" class="section">
+      <div class="wrap">
+        <h2>Safety</h2>
+        <ul class="safety">
+          <li><strong>Back up first.</strong> Keep an independent copy of anything irreplaceable. Keep RetroArch closed while modifying or installing cards that are in-use by your emulator — editing a separate copy is safe.</li>
+          <li><strong>Convert never overwrites.</strong> Delete or rename a previous <code>.srm</code> if you intend to replace it.</li>
+          <li><strong>Import / delete are staged.</strong> Updated card is written to a temp file, re-validated, then replaced.</li>
+          <li><strong>Install auto-backs-up.</strong> Overwritten card is copied to <code>.srm.japs1me-bak</code> first; refuses if that backup exists.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- INSTALL -->
+    <section id="install" class="section section-alt">
+      <div class="wrap">
+        <h2>Getting Started</h2>
+        <p class="section-sub">You need <code>git</code> plus a Rust toolchain with <code>Cargo</code>. Four steps, copy-paste friendly.</p>
+        <ol class="steps">
+          <li><strong>Clone the repo</strong><br /><code>git clone https://github.com/MARKMENTAL/JAPS1ME</code><br /><code>cd JAPS1ME</code></li>
+          <li><strong>Build the release binary</strong><br /><code>cargo build --release</code> — binary lands at <code>target/release/japs1me</code>.</li>
+          <li><strong>Check the version</strong><br /><code>target/release/japs1me --version</code> — expect <code>0.1.0</code>.</li>
+          <li><strong>List your first card</strong><br /><code>target/release/japs1me list save-games/pro-evolution-soccer-2.22507.gme</code></li>
+        </ol>
+        <div class="terminal" x-data="{ copied: false }">
+          <div class="term-bar"><span class="term-title">japs1me — getting started</span><span class="win-controls" aria-hidden="true"><span class="win-btn min">−</span><span class="win-btn max">□</span><span class="win-btn close">×</span></span></div>
+          <div class="term-body">
+            <code>$ git clone https://github.com/MARKMENTAL/JAPS1ME<br />$ cd JAPS1ME<br />$ cargo build --release<br />$ target/release/japs1me --version</code>
+            <button type="button" @click="navigator.clipboard.writeText('git clone https://github.com/MARKMENTAL/JAPS1ME\ncd JAPS1ME\ncargo build --release\ntarget/release/japs1me --version').then(() => { copied = true; setTimeout(() => copied = false, 1500); })" x-text="copied ? 'Copied!' : 'Copy'"></button>
+          </div>
+        </div>
+        <p>Full usage, checks, and tests in the <a href="https://github.com/MARKMENTAL/JAPS1ME">README on GitHub</a>.</p>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="section">
+      <div class="wrap" x-data="{ open: null }">
+        <h2>FAQ</h2>
+        <div class="faq">
+          <div class="faq-item">
+            <button @click="open = open === 1 ? null : 1" :aria-expanded="open === 1">Which files can each command touch?<span>+</span></button>
+            <div x-show="open === 1" x-cloak><p><code>list</code> reads <code>.gme</code> + raw. <code>convert</code> takes <code>.gme</code> only. <code>import</code> copies <code>.gme → .srm</code>. <code>delete</code> edits <code>.srm</code> only.</p></div>
+          </div>
+          <div class="faq-item">
+            <button @click="open = open === 2 ? null : 2" :aria-expanded="open === 2">Why must the .srm name match the disc?<span>+</span></button>
+            <div x-show="open === 2" x-cloak><p>RetroArch PS1 cores use one card per game, with the <code>.srm</code> basename matching the disc image (e.g. game <code>.cue</code>). <code>install</code> replaces contents in place so the filename stays correct.</p></div>
+          </div>
+          <div class="faq-item">
+            <button @click="open = open === 3 ? null : 3" :aria-expanded="open === 3">How is this different from MemcardRex?<span>+</span></button>
+            <div x-show="open === 3" x-cloak><p>MemcardRex is a full GUI editor — per-frame browser, VGS/VMP/MCX support, card formatting, comment editing, hardware support — and it is no longer maintained. JAPS1ME picks up the torch for the PS1 community as a Linux-first, CLI-driven utility written in Rust, simplified to what RetroArch players need: <code>.gme → .srm</code> conversion, save listing, single-save import, delete, and install, with staged, validated writes.</p></div>
+          </div>
+          <div class="faq-item">
+            <button @click="open = open === 4 ? null : 4" :aria-expanded="open === 4">Headerless .gme files?<span>+</span></button>
+            <div x-show="open === 4" x-cloak><p>Accepted with a warning — the documented exception. Length, <code>MC</code> signature, and checksums are otherwise strictly validated.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-grid">
+      <div>
+        <span class="footer-brand"><span class="brand-mark static" aria-hidden="true"></span><span class="brand-text small">JAPS1ME</span></span>
+        <p>Just A PS1 Memory Card Editor. v0.1.0 early development. GPL-3.0-or-later © 2026 Mark Robillard Jr (MARKMENTAL).</p>
+        <p class="disclaimer">Free, open-source community project for managing PS1 memory cards and saved games. Not an official Sony product; not affiliated with or endorsed by Sony. PlayStation is a trademark of Sony Interactive Entertainment.</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/MARKMENTAL/JAPS1ME" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ShendoXT/memcardrex" target="_blank" rel="noopener">MemcardRex (reference)</a>
+      </div>
+    </div>
+    <div class="gradient-bar" aria-hidden="true"></div>
+  </footer>
+</body>
+</html>
