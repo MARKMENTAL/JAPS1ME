@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 #[command(
     name = "japs1me",
     version,
-    about = "JAPS1ME - PS1 RetroArch Save Converter (DexDrive .gme to RetroArch .srm)"
+    about = "JAPS1ME - Just A PS1 Memory Card Editor (DexDrive .gme to RetroArch .srm)"
 )]
 struct Cli {
     #[command(subcommand)]

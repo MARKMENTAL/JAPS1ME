@@ -1,9 +1,10 @@
 # JAPS1ME
 
-**JAPS1ME - PS1 RetroArch Save Converter** is a command-line tool for converting
-DexDrive PlayStation 1 memory-card images (`.gme`) to RetroArch memory-card
-format (`.srm`). It also lists the saves on `.gme` and raw (`.srm`/`.mcr`)
-card images.
+**JAPS1ME - Just A PS1 Memory Card Editor** is a command-line tool for managing
+PlayStation 1 memory-card saves for RetroArch-style emulators. It converts
+DexDrive (`.gme`) card images to RetroArch (`.srm`) format, lists the saves on
+`.gme` and raw (`.srm`/`.mcr`) card images, and imports, deletes, and installs
+saves and cards.
 
 ## Features
 
@@ -45,14 +46,6 @@ target/release/japs1me delete mysaves.srm BESLES-03946PES-OPT
 target/release/japs1me install mysaves.srm
 ```
 
-Examples:
-
-```sh
-target/release/japs1me list save-games/pro-evolution-soccer-2.22507.gme
-target/release/japs1me convert save-games/pro-evolution-soccer-2.22507.gme pes2.srm
-target/release/japs1me import mysaves.srm save-games/pro-evolution-soccer-2.22507.gme BESLES-03946PES-OPT
-```
-
 ### `list`
 
 - Accepts `.gme` files and raw images (`.srm`, `.mcr`, …) detected by size and `MC` signature.
@@ -89,8 +82,24 @@ target/release/japs1me import mysaves.srm save-games/pro-evolution-soccer-2.2250
 
 - Back up saves before converting.
 - `convert` refuses to overwrite; delete or rename a previous `.srm` first if you intend to replace it.
-- `import` replaces the target `.srm` after staging and validation; back it up first and keep RetroArch closed while modifying it.
+- `import` and `delete` replace the target `.srm` after staging and validation; back it up first and keep RetroArch closed while modifying it.
+- `install` backs up the overwritten card automatically, but keep an independent backup of anything irreplaceable.
 - Avoid testing against your only copy of a save; the fixture in `save-games/` is read-only test input.
+
+## Design compared with JAPS2ME
+
+JAPS1ME's CLI mirrors JAPS2ME, but the workflow differs because the emulators
+manage cards differently:
+
+- PCSX2 and its derivatives share one memory card across many games, so
+  JAPS2ME trades in single-save containers (`.cbs`/`.max`) imported into a
+  shared card.
+- RetroArch and PS1 emulators like PCSXR instead use one memory card per
+  game, with the `.srm` basename matching the disc image. Whole-card
+  `convert` and `install` are therefore the primary workflow here.
+- Importing individual saves out of a shared card image only makes sense from
+  `.gme` DexDrive archives, so `import` is limited to `.gme` sources; there is
+  no single-save (`.mcs`/`.psx`) support.
 
 ## Scope compared with MemcardRex
 
@@ -100,7 +109,7 @@ importing rather than general memory-card editing:
 - `list` covers saves and free slots; there is no per-frame browser.
 - `convert` handles DexDrive `.gme` only; there is no VGS/VMP/MCX support and no reverse conversion.
 - `import` copies whole saves from `.gme` into `.srm`; there is no single-save (`.mcs`/`.psx`) support and no import into `.gme`.
-- There is no GUI, save import/export of single saves (`.mcs`/`.psx`), deletion, formatting, comment editing, or hardware (DexDrive/serial) support. JAPS1ME validates directory checksums read-only and never recalculates them.
+- There is no GUI, card formatting, comment editing, or hardware (DexDrive/serial) support. JAPS1ME validates directory checksums read-only and never recalculates them, except when relinking frames during imports and resetting them during deletions.
 
 For details about the card formats, see the [technical format guide](docs/FORMATS.md). The [save-games collection](save-games/README.md) lists the saves shared in this repository.
 
