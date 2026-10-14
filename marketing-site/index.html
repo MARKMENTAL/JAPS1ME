@@ -52,7 +52,7 @@
           <p class="lede">A fast Rust CLI for managing PlayStation 1 memory-card saves for RetroArch-style emulators. Convert whole cards, browse saves, import, delete, and install — with staged, validated writes.</p>
           <p class="early-note">Early development: commands and output may change. Back up your saves before use.</p>
           <div class="hero-cta">
-            <a class="btn btn-primary" href="#download">Download v0.1.0</a>
+            <a class="btn btn-primary" href="#download">Download v0.2.0</a>
             <a class="btn btn-secondary" href="#install">Get started</a>
           </div>
           <p class="alt-link">Prefer source? <a href="https://github.com/MARKMENTAL/JAPS1ME" target="_blank" rel="noopener">View on GitHub →</a></p>
@@ -77,7 +77,7 @@ Free: 9 of 15 slots</code></pre>
           <p class="hero-card-note">Single-game card — .srm name matches the .cue</p>
           <div class="gradient-bar" aria-hidden="true"></div>
           </div>
-          <p class="hero-version"><span class="version-badge">v0.1.0 — early development</span></p>
+          <p class="hero-version"><span class="version-badge">v0.2.0 — early development</span></p>
         </div>
       </div>
     </section>
@@ -96,26 +96,40 @@ Free: 9 of 15 slots</code></pre>
     <section id="download" class="section section-alt">
       <div class="wrap" x-data="{ copied: '' }">
         <h2>Download</h2>
-        <p class="section-sub">Preferred way to get JAPS1ME <code>v0.1.0</code> — prebuilt x86_64 binaries. Verify the checksum before running.</p>
+        <p class="section-sub">Preferred way to get JAPS1ME <code>v0.2.0</code> — prebuilt x86_64 binaries. Verify the checksum before running.</p>
         <div class="download-cards">
           <article class="dl-card">
             <p><span class="os-badge linux">Linux x86_64</span></p>
-            <h3>JAPS1ME v0.1.0</h3>
-            <p class="dl-meta"><code>JAPS1ME-v0.1.0-Linux-x86_64.tar.gz</code> · 671912 B (656.2 KiB)</p>
-            <p><a class="btn btn-secondary" href="./JAPS1ME-v0.1.0-Linux-x86_64.tar.gz" download>Download .tar.gz</a></p>
+            <h3>JAPS1ME v0.2.0</h3>
+            <p class="dl-meta"><code>JAPS1ME-v0.2.0-Linux-x86_64.tar.gz</code> · 681543 B (665.6 KiB)</p>
+            <p><a class="btn btn-secondary" href="./JAPS1ME-v0.2.0-Linux-x86_64.tar.gz" download>Download .tar.gz</a></p>
             <p class="dl-label">SHA-256</p>
-            <div class="cmd"><code>670ace30eb11872c5b316dc90160a2f2f243359b725f62a5fa756594fb52900c</code><button @click="navigator.clipboard.writeText('670ace30eb11872c5b316dc90160a2f2f243359b725f62a5fa756594fb52900c').then(() => { copied = 'linux'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'linux' ? 'Copied!' : 'Copy'"></button></div>
-            <p class="dl-verify">Verify: <code>sha256sum JAPS1ME-v0.1.0-Linux-x86_64.tar.gz</code></p>
+            <div class="cmd"><code>47b87b3f46038de59ab78f6c762883bb06a6d3964e619c0481b6e531caf73c46</code><button @click="navigator.clipboard.writeText('47b87b3f46038de59ab78f6c762883bb06a6d3964e619c0481b6e531caf73c46').then(() => { copied = 'linux'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'linux' ? 'Copied!' : 'Copy'"></button></div>
+            <p class="dl-verify">Verify: <code>sha256sum JAPS1ME-v0.2.0-Linux-x86_64.tar.gz</code></p>
           </article>
           <article class="dl-card">
             <p><span class="os-badge windows">Windows x86_64</span></p>
-            <h3>JAPS1ME v0.1.0</h3>
-            <p class="dl-meta"><code>JAPS1ME-v0.1.0-Windows-x86_64.zip</code> · 507233 B (495.3 KiB)</p>
-            <p><a class="btn btn-secondary" href="./JAPS1ME-v0.1.0-Windows-x86_64.zip" download>Download .zip</a></p>
+            <h3>JAPS1ME v0.2.0</h3>
+            <p class="dl-meta"><code>JAPS1ME-v0.2.0-Windows-x86_64.zip</code> · 514878 B (502.8 KiB)</p>
+            <p><a class="btn btn-secondary" href="./JAPS1ME-v0.2.0-Windows-x86_64.zip" download>Download .zip</a></p>
             <p class="dl-label">SHA-256</p>
-            <div class="cmd"><code>bbf15c700ad41b1af8bb2ed658461cabe7aabd2dc053fad7cf6992977c37a558</code><button @click="navigator.clipboard.writeText('bbf15c700ad41b1af8bb2ed658461cabe7aabd2dc053fad7cf6992977c37a558').then(() => { copied = 'windows'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'windows' ? 'Copied!' : 'Copy'"></button></div>
-            <p class="dl-verify">Verify: <code>certutil -hashfile JAPS1ME-v0.1.0-Windows-x86_64.zip SHA256</code></p>
+            <div class="cmd"><code>910d733ffab2738649493cf00cac0c1cdc8b28550a3cb0b39acda91de12ae840</code><button @click="navigator.clipboard.writeText('910d733ffab2738649493cf00cac0c1cdc8b28550a3cb0b39acda91de12ae840').then(() => { copied = 'windows'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'windows' ? 'Copied!' : 'Copy'"></button></div>
+            <p class="dl-verify">Verify: <code>certutil -hashfile JAPS1ME-v0.2.0-Windows-x86_64.zip SHA256</code></p>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEW IN V0.2.0 -->
+    <section id="whats-new" class="section">
+      <div class="wrap">
+        <h2>New in v0.2.0</h2>
+        <p class="section-sub">Workspace pulls, smarter matching, friendlier fallbacks.</p>
+        <div class="cards">
+          <article><h3>Copy</h3><p>New command: pull an emulator <code>.srm</code> into this workspace for JAPS1ME work. Bare names and prefixes resolve in the saves dir; asks before overwriting.</p></article>
+          <article><h3>Install auto-match</h3><p>When the source file name matches a card in the saves dir, <code>install</code> skips the numbered picker and goes straight to confirm.</p></article>
+          <article><h3>Mislabeled .gme</h3><p><code>import</code> accepts raw 131072-byte cards misnamed <code>.gme</code> (with a warning); <code>convert</code> tells you to copy/rename instead.</p></article>
+          <article><h3>Local override</h3><p><code>.japs1mesavedir</code> in the invocation directory overrides the global config — per-workspace saves dirs, Windows-friendly.</p></article>
         </div>
       </div>
     </section>
@@ -124,13 +138,14 @@ Free: 9 of 15 slots</code></pre>
     <section id="features" class="section">
       <div class="wrap">
         <h2>What it does</h2>
-        <p class="section-sub">Five commands. No GUI, no surprises.</p>
+        <p class="section-sub">Six commands. No GUI, no surprises.</p>
         <div class="cards">
-          <article><h3>Convert</h3><p>Validate a DexDrive <code>.gme</code> (including headerless variants) and write its raw 131072-byte payload as <code>.srm</code>. Never overwrites.</p></article>
+          <article><h3>Convert</h3><p>Validate a DexDrive <code>.gme</code> (including headerless variants) and write its raw 131072-byte payload as <code>.srm</code>. Never overwrites; raw inputs are told to copy instead.</p></article>
           <article><h3>List</h3><p>Browse <code>.gme</code> and raw <code>.srm</code> cards: slot, save name, Shift-JIS title, region, blocks, payload size, free slots.</p></article>
-          <article><h3>Import</h3><p>Copy one named save from <code>.gme</code> into <code>.srm</code>. Duplicate + free-space checks, staged + re-validated replace.</p></article>
+          <article><h3>Import</h3><p>Copy one named save from <code>.gme</code> (or a raw card misnamed <code>.gme</code>) into <code>.srm</code>. Duplicate + free-space checks, staged + re-validated replace.</p></article>
           <article><h3>Delete</h3><p>Delete by slot number or exact save name. Slots reset to formatted with fresh checksums.</p></article>
-          <article><h3>Install</h3><p>Install a <code>.srm</code> into your RetroArch saves dir. Remembers the dir, backs up the replaced card.</p></article>
+          <article><h3>Copy</h3><p>Pull an emulator <code>.srm</code> into this workspace for JAPS1ME work. Bare names and prefixes resolve in the saves dir; asks before overwriting.</p></article>
+          <article><h3>Install</h3><p>Install a <code>.srm</code> into your RetroArch saves dir. Remembers the dir, filename auto-match skips the picker, backs up the replaced card.</p></article>
           <article><h3>Safety first</h3><p>Read-only listing and checksums. Convert refuses to overwrite. Import/delete stage to temp files first.</p></article>
         </div>
       </div>
@@ -146,6 +161,7 @@ Free: 9 of 15 slots</code></pre>
           <button role="tab" :aria-selected="tab === 'convert'" :class="tab === 'convert' && 'active'" @click="tab = 'convert'">convert</button>
           <button role="tab" :aria-selected="tab === 'import'" :class="tab === 'import' && 'active'" @click="tab = 'import'">import</button>
           <button role="tab" :aria-selected="tab === 'delete'" :class="tab === 'delete' && 'active'" @click="tab = 'delete'">delete</button>
+          <button role="tab" :aria-selected="tab === 'copy'" :class="tab === 'copy' && 'active'" @click="tab = 'copy'">copy</button>
           <button role="tab" :aria-selected="tab === 'install'" :class="tab === 'install' && 'active'" @click="tab = 'install'">install</button>
         </div>
 
@@ -159,15 +175,19 @@ Free: 9 of 15 slots</code></pre>
             <div class="cmd"><code>japs1me convert save-games/pro-evolution-soccer-2.22507.gme pes2.srm</code><button @click="navigator.clipboard.writeText('japs1me convert save-games/pro-evolution-soccer-2.22507.gme pes2.srm').then(() => { copied = 'convert'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'convert' ? 'Copied!' : 'Copy'"></button></div>
           </div>
           <div x-show="tab === 'import'" x-cloak>
-            <p>Import one save by exact name from <code>.gme</code> into <code>.srm</code>. Prompts <code>y/n</code> on duplicates (interactive terminals only).</p>
+            <p>Import one save by exact name from <code>.gme</code> (or a raw card misnamed <code>.gme</code>) into <code>.srm</code>. Prompts <code>y/n</code> on duplicates (interactive terminals only).</p>
             <div class="cmd"><code>japs1me import pes2.srm save-games/pro-evolution-soccer-2.22507.gme BESLES-03946PES-OPT</code><button @click="navigator.clipboard.writeText('japs1me import pes2.srm save-games/pro-evolution-soccer-2.22507.gme BESLES-03946PES-OPT').then(() => { copied = 'import'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'import' ? 'Copied!' : 'Copy'"></button></div>
           </div>
           <div x-show="tab === 'delete'" x-cloak>
             <p>Delete by 1-based slot number or exact save name. <code>.srm</code> targets only.</p>
             <div class="cmd"><code>japs1me delete pes2.srm BESLES-03946PES-OPT</code><button @click="navigator.clipboard.writeText('japs1me delete pes2.srm BESLES-03946PES-OPT').then(() => { copied = 'delete'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'delete' ? 'Copied!' : 'Copy'"></button></div>
           </div>
+          <div x-show="tab === 'copy'" x-cloak>
+            <p>Pull an emulator <code>.srm</code> into this workspace for JAPS1ME work. Bare names and prefixes resolve in the saves dir; asks <code>y/n</code> before overwriting.</p>
+            <div class="cmd"><code>japs1me copy "ISS Pro Evolution (USA).srm" work.srm</code><button @click="navigator.clipboard.writeText('japs1me copy \'ISS Pro Evolution (USA).srm\' work.srm').then(() => { copied = 'copy'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'copy' ? 'Copied!' : 'Copy'"></button></div>
+          </div>
           <div x-show="tab === 'install'" x-cloak>
-            <p>Install a <code>.srm</code> into the configured RetroArch saves dir. Backs up the overwritten card first.</p>
+            <p>Install a <code>.srm</code> into the configured RetroArch saves dir. Filename auto-match skips the picker; backs up the overwritten card first.</p>
             <div class="cmd"><code>japs1me install pes2.srm</code><button @click="navigator.clipboard.writeText('japs1me install pes2.srm').then(() => { copied = 'install'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'install' ? 'Copied!' : 'Copy'"></button></div>
           </div>
         </div>
@@ -191,11 +211,11 @@ Free: 9 of 15 slots</code></pre>
     <section id="install" class="section section-alt">
       <div class="wrap">
         <h2>Getting Started</h2>
-        <p class="section-sub">Preferred: grab a prebuilt <code>v0.1.0</code> from <a href="#download">Download</a> above. Otherwise build from source — you need <code>git</code> plus a Rust toolchain with <code>Cargo</code>. Four steps, copy-paste friendly.</p>
+        <p class="section-sub">Preferred: grab a prebuilt <code>v0.2.0</code> from <a href="#download">Download</a> above. Otherwise build from source — you need <code>git</code> plus a Rust toolchain with <code>Cargo</code>. Four steps, copy-paste friendly.</p>
         <ol class="steps">
           <li><strong>Clone the repo</strong><br /><code>git clone https://github.com/MARKMENTAL/JAPS1ME</code><br /><code>cd JAPS1ME</code></li>
           <li><strong>Build the release binary</strong><br /><code>cargo build --release</code> — binary lands at <code>target/release/japs1me</code>.</li>
-          <li><strong>Check the version</strong><br /><code>target/release/japs1me --version</code> — expect <code>0.1.0</code>.</li>
+          <li><strong>Check the version</strong><br /><code>target/release/japs1me --version</code> — expect <code>0.2.0</code>.</li>
           <li><strong>List your first card</strong><br /><code>target/release/japs1me list save-games/pro-evolution-soccer-2.22507.gme</code></li>
         </ol>
         <div class="terminal" x-data="{ copied: false }">
@@ -216,7 +236,7 @@ Free: 9 of 15 slots</code></pre>
         <div class="faq">
           <div class="faq-item">
             <button @click="open = open === 1 ? null : 1" :aria-expanded="open === 1">Which files can each command touch?<span>+</span></button>
-            <div x-show="open === 1" x-cloak><p><code>list</code> reads <code>.gme</code> + raw. <code>convert</code> takes <code>.gme</code> only. <code>import</code> copies <code>.gme → .srm</code>. <code>delete</code> edits <code>.srm</code> only.</p></div>
+            <div x-show="open === 1" x-cloak><p><code>list</code> reads <code>.gme</code> + raw. <code>convert</code> takes <code>.gme</code> only. <code>import</code> copies <code>.gme</code> (or raw misnamed <code>.gme</code>) <code>→ .srm</code>. <code>delete</code> edits <code>.srm</code> only. <code>copy</code> pulls <code>.srm → .srm</code> into the workspace.</p></div>
           </div>
           <div class="faq-item">
             <button @click="open = open === 2 ? null : 2" :aria-expanded="open === 2">Why must the .srm name match the disc?<span>+</span></button>
@@ -232,7 +252,11 @@ Free: 9 of 15 slots</code></pre>
           </div>
           <div class="faq-item">
             <button @click="open = open === 5 ? null : 5" :aria-expanded="open === 5">Why is there no GUI?<span>+</span></button>
-            <div x-show="open === 5" x-cloak><p>Deliberate. JAPS1ME follows the Unix philosophy: small, composable commands (<code>list</code>, <code>convert</code>, <code>import</code>, <code>delete</code>, <code>install</code>) focused on one task, done well with the least ceremony. Plain-text output pipes and scripts cleanly; a GUI would add bulk without helping the per-game RetroArch card workflow.</p></div>
+            <div x-show="open === 5" x-cloak><p>Deliberate. JAPS1ME follows the Unix philosophy: small, composable commands (<code>list</code>, <code>convert</code>, <code>import</code>, <code>delete</code>, <code>copy</code>, <code>install</code>) focused on one task, done well with the least ceremony. Plain-text output pipes and scripts cleanly; a GUI would add bulk without helping the per-game RetroArch card workflow.</p></div>
+          </div>
+          <div class="faq-item">
+            <button @click="open = open === 6 ? null : 6" :aria-expanded="open === 6">What's new in v0.2.0?<span>+</span></button>
+            <div x-show="open === 6" x-cloak><p>New <code>copy</code> command (workspace pulls with bare-name/prefix resolution), <code>install</code> filename auto-match, <code>import</code> accepts raw cards misnamed <code>.gme</code>, and a <code>.japs1mesavedir</code> workspace override for the saves dir. See <a href="#whats-new">New in v0.2.0</a>.</p></div>
           </div>
         </div>
       </div>
@@ -243,7 +267,7 @@ Free: 9 of 15 slots</code></pre>
     <div class="wrap footer-grid">
       <div>
         <span class="footer-brand"><span class="brand-mark static" aria-hidden="true"></span><span class="brand-text small">JAPS1ME</span></span>
-        <p>Just A PS1 Memory Card Editor. v0.1.0 early development. GPL-3.0-or-later © 2026 Mark Robillard Jr (MARKMENTAL).</p>
+        <p>Just A PS1 Memory Card Editor. v0.2.0 early development. GPL-3.0-or-later © 2026 Mark Robillard Jr (MARKMENTAL).</p>
         <p class="disclaimer">Free, open-source community project for managing PS1 memory cards and saved games. Not an official Sony product; not affiliated with or endorsed by Sony. PlayStation is a trademark of Sony Interactive Entertainment.</p>
       </div>
       <div class="footer-links">
