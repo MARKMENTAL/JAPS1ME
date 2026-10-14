@@ -13,8 +13,9 @@ saves and cards.
 ## Features
 
 - Convert DexDrive `.gme` files (including headerless/zeroed-header variants) to RetroArch `.srm` with validated stripping.
-- Import a named save from a `.gme` file into a RetroArch `.srm` card, with duplicate and free-space checks.
+- Import a named save from a `.gme` file (or a raw card misnamed `.gme`) into a RetroArch `.srm` card, with duplicate and free-space checks.
 - Delete saves from a `.srm` card by slot number or save name.
+- Copy an emulator `.srm` out of the RetroArch saves directory into this workspace for JAPS1ME work (bare file name or prefix; asks before overwriting).
 - Install a `.srm` card into your RetroArch saves directory (remembers the directory, backs up the replaced card).
 - Browse saves with slot numbers, save names, Shift-JIS game titles, regions, block counts, payload sizes, and free slots.
 - Read-only `list`; `convert` validates before writing and never overwrites an existing output file.
@@ -36,8 +37,9 @@ The executable is created at `target/release/japs1me`.
 | `japs1me --version` | Print the version (`-V` is also supported). |
 | `japs1me list <CARD.gme\|CARD.srm>` | List saves and free slots. |
 | `japs1me convert <INPUT.gme> <OUTPUT.srm>` | Convert a DexDrive `.gme` file to RetroArch `.srm`. |
-| `japs1me import <CARD.srm> <SOURCE.gme> <SAVE-NAME>` | Import a save from a `.gme` file into a `.srm` card. |
+| `japs1me import <CARD.srm> <SOURCE.gme> <SAVE-NAME>` | Import a save from a `.gme` (or raw misnamed `.gme`) file into a `.srm` card. |
 | `japs1me delete <CARD.srm> <SLOT-OR-SAVE>` | Delete a save from a `.srm` card by 1-based slot number or save name. |
+| `japs1me copy <SOURCE.srm> <DEST.srm>` | Copy an emulator `.srm` into the workspace for JAPS1ME editing; bare source names resolve in the saves directory. |
 | `japs1me install <SOURCE.srm>` | Install a `.srm` card into the configured RetroArch saves directory. |
 
 Examples:
@@ -47,6 +49,7 @@ target/release/japs1me list save-games/pro-evolution-soccer-2.22507.gme
 target/release/japs1me convert save-games/pro-evolution-soccer-2.22507.gme pes2.srm
 target/release/japs1me import mysaves.srm save-games/pro-evolution-soccer-2.22507.gme BESLES-03946PES-OPT
 target/release/japs1me delete mysaves.srm BESLES-03946PES-OPT
+target/release/japs1me copy "ISS Pro Evolution (USA).srm" /tmp/work.srm
 target/release/japs1me install mysaves.srm
 ```
 
@@ -59,11 +62,12 @@ target/release/japs1me install mysaves.srm
 ### `convert`
 
 - Accepts DexDrive `.gme` input only (134976 bytes with an `MC` signature at offset 3904). Files with a missing/zeroed header are accepted with a warning.
+- A raw 131072-byte input is rejected with an “already a raw `.srm` image” error; copy or rename it instead of converting.
 - Writes the raw 131072-byte payload verbatim via a temporary file; existing output files are not overwritten.
 
 ### `import`
 
-- Copies one save (matched by exact save name, e.g. `BESLES-03946PES-OPT`) from a `.gme` source into a raw `.srm` card, using the first free slots in slot order.
+- Copies one save (matched by exact save name, e.g. `BESLES-03946PES-OPT`) from a `.gme` source into a raw `.srm` card, using the first free slots in slot order. A raw 131072-byte source starting with `MC` is also accepted (with a warning) for `.gme` files that are actually misnamed raw images.
 - If the save already exists on the target, asks `Save <name> already exists on <card>, overwrite it with the one from <source>? (y/n)` on interactive terminals. Only `y`/`yes` proceeds; anything else cancels and leaves the card unchanged. The old save is freed first, so replacements with a different block count work.
 - When stdin is not a terminal, an existing save is a hard error instead of a prompt.
 - Link bytes are relinked to the new slots, the size field is recomputed, and touched directory checksums are regenerated. Identity bytes (region, product code, identifier, title, save data) are preserved verbatim; saves imported from a deleted source slot are normalized to active.
@@ -75,10 +79,17 @@ target/release/japs1me install mysaves.srm
 - The save's slots are reset to formatted with fresh checksums and zeroed data, freeing them for future imports.
 - `.srm` targets only; the updated card is staged, re-validated, and only then replaced.
 
+### `copy`
+
+- Pull an emulator save out of the RetroArch saves directory into this workspace copy, so `list`/`import`/`delete` work happens here and the emulator original is never modified (raw `.srm`, 131072 bytes starting with `MC`).
+- A bare source file name (no `/`) that does not exist as given resolves inside the configured RetroArch saves directory (`./.japs1mesavedir` wins over the global config when both exist); paths with a separator or that exist literally are used as-is. An exact file-name match wins; otherwise a prefix match applies: no match errors out, one match is used, and several show a numbered picker.
+- An existing destination asks `Overwrite <dest> with <source>? (y/n)` on interactive terminals; only `y`/`yes` proceeds. Piped stdin fails instead of overwriting. Copying a file onto itself is refused.
+- The destination is staged in a temporary file and re-validated before it becomes visible.
+
 ### `install`
 
-- On first use (no `~/.config/japs1mesavedir`), asks for your RetroArch PS1 core's saves directory and saves it as a single line in that file (`$XDG_CONFIG_HOME` is honored when set).
-- Scans the directory for `.srm` files and asks which one to overwrite (numbered, single attempt). A second strict `y`/`yes` confirmation follows; anything else cancels.
+- On first use (no saved directory configured), asks for your RetroArch PS1 core's saves directory and saves it as a single line (`$XDG_CONFIG_HOME` is honored when set; falls back to `./.japs1mesavedir` when no user config directory resolves, e.g. on Windows). A `./.japs1mesavedir` file in the invocation directory overrides the global config when both exist, so a workspace can point elsewhere.
+- When the source file name exactly matches a `.srm` in the saves directory, that card is inferred and the numbered picker is skipped. Otherwise scans the directory for `.srm` files and asks which one to overwrite (numbered, single attempt). A second strict `y`/`yes` confirmation follows; anything else cancels.
 - Backs up the existing card to `<name>.srm.japs1me-bak` first (refuses to proceed if that backup already exists), then replaces the target's contents in place so the filename still matches the game's `.cue` basename.
 - Prompts require an interactive terminal; piped stdin fails with an error instead.
 
@@ -102,7 +113,8 @@ manage cards differently:
   game, with the `.srm` basename matching the disc image. Whole-card
   `convert` and `install` are therefore the primary workflow here.
 - Importing individual saves out of a shared card image only makes sense from
-  `.gme` DexDrive archives, so `import` is limited to `.gme` sources; there is
+  `.gme` DexDrive archives (raw images misnamed `.gme` are also accepted as
+  sources), so `import` is limited to `.gme`/raw sources; there is
   no single-save (`.mcs`/`.psx`) support.
 
 ## Scope compared with MemcardRex
@@ -112,7 +124,7 @@ importing rather than general memory-card editing:
 
 - `list` covers saves and free slots; there is no per-frame browser.
 - `convert` handles DexDrive `.gme` only; there is no VGS/VMP/MCX support and no reverse conversion.
-- `import` copies whole saves from `.gme` into `.srm`; there is no single-save (`.mcs`/`.psx`) support and no import into `.gme`.
+- `import` copies whole saves from `.gme` (or misnamed raw) into `.srm`; there is no single-save (`.mcs`/`.psx`) support and no import into `.gme`.
 - There is no GUI, card formatting, comment editing, or hardware (DexDrive/serial) support. JAPS1ME validates directory checksums read-only and never recalculates them, except when relinking frames during imports and resetting them during deletions.
 
 For details about the card formats, see the [technical format guide](docs/FORMATS.md). The [save-games collection](save-games/README.md) lists the saves shared in this repository.
