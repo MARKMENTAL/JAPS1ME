@@ -16,8 +16,9 @@ saves and cards.
 - Import a named save from a `.gme` file (or a raw card misnamed `.gme`) into a RetroArch `.srm` card, with duplicate and free-space checks.
 - Delete saves from a `.srm` card by slot number or save name.
 - Copy an emulator `.srm` out of the RetroArch saves directory into this workspace for JAPS1ME work (bare file name or prefix; asks before overwriting).
+- Configure the RetroArch saves directory ahead of time with `setup`.
 - Install a `.srm` card into your RetroArch saves directory (remembers the directory, backs up the replaced card).
-- Browse saves with slot numbers, save names, Shift-JIS game titles, regions, block counts, payload sizes, and free slots.
+- Browse one or more cards with slot numbers, save names, Shift-JIS game titles, regions, block counts, payload sizes, and free slots.
 - Read-only `list`; `convert` validates before writing and never overwrites an existing output file.
 
 ## Build
@@ -35,27 +36,32 @@ The executable is created at `target/release/japs1me`.
 | Command | Purpose |
 | --- | --- |
 | `japs1me --version` | Print the version (`-V` is also supported). |
-| `japs1me list <CARD.gme\|CARD.srm>` | List saves and free slots. |
+| `japs1me list <CARD.gme\|CARD.srm>...` | List saves and free slots for one or more cards. |
 | `japs1me convert <INPUT.gme> <OUTPUT.srm>` | Convert a DexDrive `.gme` file to RetroArch `.srm`. |
 | `japs1me import <CARD.srm> <SOURCE.gme> <SAVE-NAME>` | Import a save from a `.gme` (or raw misnamed `.gme`) file into a `.srm` card. |
 | `japs1me delete <CARD.srm> <SLOT-OR-SAVE>` | Delete a save from a `.srm` card by 1-based slot number or save name. |
-| `japs1me copy <SOURCE.srm> <DEST.srm>` | Copy an emulator `.srm` into the workspace for JAPS1ME editing; bare source names resolve in the saves directory. |
+| `japs1me copy <SOURCE.srm> <DEST.srm\|DEST-DIR>` | Copy an emulator `.srm` into the workspace for JAPS1ME editing; bare source names resolve in the saves directory. A directory destination keeps the source filename. |
+| `japs1me setup` | Configure the RetroArch saves directory used by `copy` and `install`. |
 | `japs1me install <SOURCE.srm>` | Install a `.srm` card into the configured RetroArch saves directory. |
 
 Examples:
 
 ```sh
 target/release/japs1me list save-games/pro-evolution-soccer-2.22507.gme
+target/release/japs1me list save-games/*.gme
 target/release/japs1me convert save-games/pro-evolution-soccer-2.22507.gme pes2.srm
 target/release/japs1me import mysaves.srm save-games/pro-evolution-soccer-2.22507.gme BESLES-03946PES-OPT
 target/release/japs1me delete mysaves.srm BESLES-03946PES-OPT
 target/release/japs1me copy "ISS Pro Evolution (USA).srm" /tmp/work.srm
+target/release/japs1me copy "ISS Pro Evolution (USA).srm" .
+target/release/japs1me setup
 target/release/japs1me install mysaves.srm
 ```
 
 ### `list`
 
 - Accepts `.gme` files and raw images (`.srm`, `.mcr`, …) detected by size and `MC` signature.
+- Accepts one or more card paths; shell-expanded globs such as `japs1me list *.srm` list each card in its own labeled table.
 - Shows each save's 1-based slot, save name, game title (Shift-JIS decoded, falling back to the save name), region, block count, payload size, and active/deleted status.
 - The footer reports free slots out of 15. Directory checksum mismatches and orphaned links are reported as warnings on stderr.
 
@@ -84,14 +90,20 @@ target/release/japs1me install mysaves.srm
 - Pull an emulator save out of the RetroArch saves directory into this workspace copy, so `list`/`import`/`delete` work happens here and the emulator original is never modified (raw `.srm`, 131072 bytes starting with `MC`).
 - A bare source file name (no `/`) that does not exist as given resolves inside the configured RetroArch saves directory (`./.japs1mesavedir` wins over the global config when both exist); paths with a separator or that exist literally are used as-is. An exact file-name match wins; otherwise a prefix match applies: no match errors out, one match is used, and several show a numbered picker.
 - An existing destination asks `Overwrite <dest> with <source>? (y/n)` on interactive terminals; only `y`/`yes` proceeds. Piped stdin fails instead of overwriting. Copying a file onto itself is refused.
+- If the destination is `.` or an existing directory, the resolved source filename is used inside that directory; other destinations are treated as exact file paths.
 - The destination is staged in a temporary file and re-validated before it becomes visible.
 
 ### `install`
 
 - On first use (no saved directory configured), asks for your RetroArch PS1 core's saves directory and saves it as a single line (`$XDG_CONFIG_HOME` is honored when set; falls back to `./.japs1mesavedir` when no user config directory resolves, e.g. on Windows). A `./.japs1mesavedir` file in the invocation directory overrides the global config when both exist, so a workspace can point elsewhere.
 - When the source file name exactly matches a `.srm` in the saves directory, that card is inferred and the numbered picker is skipped. Otherwise scans the directory for `.srm` files and asks which one to overwrite (numbered, single attempt). A second strict `y`/`yes` confirmation follows; anything else cancels.
-- Backs up the existing card to `<name>.srm.japs1me-bak` first (refuses to proceed if that backup already exists), then replaces the target's contents in place so the filename still matches the game's `.cue` basename.
+- Backs up the existing card to `<name>.srm.japs1me-bak` first, replacing an existing regular-file backup with the card currently being overwritten, then replaces the target's contents in place so the filename still matches the game's `.cue` basename.
 - Prompts require an interactive terminal; piped stdin fails with an error instead.
+
+### `setup`
+
+- Configure the RetroArch PS1 saves directory used by `copy` and `install` without starting an install.
+- Reuses a valid configured directory; if the setting is missing or points to a nonexistent directory, prompts for a valid one and saves it using the same local/global config rules as `install`.
 
 ## Safety
 
@@ -149,4 +161,3 @@ JAPS1ME is licensed under the **GNU General Public License, version 3 or (at you
 ## Acknowledgements
 
 Thanks to [ShendoXT and the MemcardRex project](https://github.com/ShendoXT/memcardrex), an advanced PlayStation 1 memory-card editor. Its implementation provided a valuable technical reference for understanding the PS1 memory-card and DexDrive formats.
-

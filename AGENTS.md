@@ -6,14 +6,16 @@ JAPS1ME (PS1 RetroArch Save Converter) is a Rust CLI and library for listing
 PlayStation 1 memory-card saves and converting DexDrive `.gme` files to
 RetroArch `.srm` format. Current CLI commands:
 
-- `list <CARD.gme|CARD.srm>` — list saves as a Unicode table with slot numbers, save names, titles, regions, block counts, payload sizes, and free slots.
+- `list <CARD.gme|CARD.srm>...` — list one or more cards as separate Unicode tables with slot numbers, save names, titles, regions, block counts, payload sizes, and free slots.
 - `convert <INPUT.gme> <OUTPUT.srm>` — validate a DexDrive `.gme` file and write its raw payload as `.srm`.
 - `import <CARD.srm> <SOURCE.gme> <SAVE-NAME>` — copy a named save from a `.gme` file into a `.srm` card.
 - `delete <CARD.srm> <SLOT-OR-SAVE>` — delete a save from a `.srm` card by slot number or save name.
+- `copy <SOURCE.srm> <DEST.srm|DEST-DIR>` — copy a card from the configured saves directory into the workspace; directory destinations use the source filename.
+- `setup` — configure the RetroArch saves directory used by `copy` and `install`.
 - `install <SOURCE.srm>` — install a `.srm` card into the configured RetroArch saves directory.
 - `--version` / `-V` — print the package version and exit.
 
-The current package version is `0.1.0`; keep the root package versions in `Cargo.toml` and `Cargo.lock` in sync.
+The current package version is `0.2.1`; keep the root package versions in `Cargo.toml` and `Cargo.lock` in sync.
 
 The project is licensed under GPL-3.0-or-later. `memcardrex` is a technical
 reference for PS1 memory-card and DexDrive behavior; see its attribution in
@@ -52,7 +54,7 @@ After changing code, rebuild the executable being invoked. For example, `cargo b
 - Never use the user's only save as a test target. Make a temporary copy under `/tmp/opencode/` for integration tests.
 - The convert command stages output in a temporary file, refuses to overwrite existing outputs, and only persists after validation.
 - The import command stages the updated card in a temporary file, re-validates it, and only then replaces the target.
-- The delete command uses the same staged replace flow. The install command backs up the overwritten card before replacing it in place.
+- The delete command uses the same staged replace flow. The install command backs up the overwritten card before replacing it in place, replacing an existing regular-file `.srm.japs1me-bak` with the latest prior card.
 - Recommend an independent backup before converting over anything important.
 
 ## Card invariants

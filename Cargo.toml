@@ -1,6 +1,6 @@
 [package]
 name = "japs1me"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "JAPS1ME - Just A PS1 Memory Card Editor (DexDrive .gme to RetroArch .srm)"
 license = "GPL-3.0-or-later"

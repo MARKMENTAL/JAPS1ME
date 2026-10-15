@@ -22,8 +22,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// List saves on a .gme or raw (.srm/.mcr) card image.
-    List { card: String },
+    /// List saves on one or more .gme or raw (.srm/.mcr) card images.
+    List {
+        #[arg(required = true, num_args = 1..)]
+        cards: Vec<String>,
+    },
     /// Convert a DexDrive .gme file to a RetroArch .srm file.
     Convert { input: String, output: String },
     /// Import a save from a .gme file into a RetroArch .srm card.
@@ -36,24 +39,35 @@ enum Command {
     Delete { card: String, target: String },
     /// Copy an emulator .srm out of the RetroArch saves directory into this workspace for JAPS1ME work.
     Copy { source: String, dest: String },
+    /// Configure the RetroArch saves directory used by copy and install.
+    Setup,
     /// Install a .srm card into the configured RetroArch saves directory.
     Install { source: String },
 }
 
 fn main() -> Result<()> {
     match Cli::parse().command {
-        Command::List { card } => {
-            let bytes = std::fs::read(&card)
-                .with_context(|| format!("reading {}", Path::new(&card).display()))?;
-            let (raw, warnings) = load_raw(&bytes, &card)?;
-            for warning in warnings {
-                eprintln!("warning: {warning}");
+        Command::List { cards } => {
+            let multiple_cards = cards.len() > 1;
+            for (index, card) in cards.iter().enumerate() {
+                let bytes = std::fs::read(card)
+                    .with_context(|| format!("reading {}", Path::new(card).display()))?;
+                let (raw, warnings) = load_raw(&bytes, card)?;
+                for warning in warnings {
+                    eprintln!("warning: {}: {warning}", Path::new(card).display());
+                }
+                let summary = parse_raw(&raw)?;
+                for warning in &summary.warnings {
+                    eprintln!("warning: {}: {warning}", Path::new(card).display());
+                }
+                if multiple_cards {
+                    if index > 0 {
+                        println!();
+                    }
+                    println!("== {} ==", Path::new(card).display());
+                }
+                println!("{}", format_save_table(&summary.saves, summary.free_slots));
             }
-            let summary = parse_raw(&raw)?;
-            for warning in &summary.warnings {
-                eprintln!("warning: {warning}");
-            }
-            println!("{}", format_save_table(&summary.saves, summary.free_slots));
         }
         Command::Convert { input, output } => {
             let bytes = std::fs::read(&input)
@@ -183,7 +197,7 @@ fn main() -> Result<()> {
             for warning in &source_summary.warnings {
                 eprintln!("warning: {warning}");
             }
-            let dest_path = PathBuf::from(&dest);
+            let dest_path = resolve_copy_destination(&dest, &resolved)?;
             if same_file(&resolved, &dest_path) {
                 bail!(
                     "source and destination are the same file ({}); nothing changed",
@@ -212,6 +226,10 @@ fn main() -> Result<()> {
                 source_summary.saves.len()
             );
         }
+        Command::Setup => {
+            let dir = ensure_saved_dir()?;
+            eprintln!("RetroArch saves directory: {}", dir.display());
+        }
         Command::Install { source } => {
             let source_bytes = std::fs::read(&source)
                 .with_context(|| format!("reading {}", Path::new(&source).display()))?;
@@ -227,26 +245,7 @@ fn main() -> Result<()> {
             for warning in &source_summary.warnings {
                 eprintln!("warning: {warning}");
             }
-            let dir = match load_saved_dir()? {
-                Some(dir) if dir.is_dir() => dir,
-                _ => {
-                    require_terminal(
-                        "no RetroArch saves directory configured; run interactively to set one",
-                    )?;
-                    let answer = prompt_line("Enter your RetroArch PS1 saves directory: ")?
-                        .ok_or_else(|| anyhow!("no directory given; nothing changed"))?;
-                    if answer.trim().is_empty() {
-                        bail!("no directory given; nothing changed");
-                    }
-                    let dir = PathBuf::from(answer.trim());
-                    if !dir.is_dir() {
-                        bail!("not a directory: '{}'; nothing changed", answer.trim());
-                    }
-                    let saved = save_dir_config(&dir)?;
-                    eprintln!("Saved saves directory to {}", saved.display());
-                    dir
-                }
-            };
+            let dir = ensure_saved_dir()?;
             let cards = find_srm_files(&dir)?;
             if cards.is_empty() {
                 bail!("no .srm files found in {}", dir.display());
@@ -290,15 +289,7 @@ fn main() -> Result<()> {
                 bail!("install cancelled; '{}' unchanged", target.display());
             }
             let backup = backup_path(&target);
-            if backup.symlink_metadata().is_ok() {
-                bail!(
-                    "backup already exists: {}; move or delete it first",
-                    backup.display()
-                );
-            }
-            std::fs::copy(&target, &backup).with_context(|| {
-                format!("backing up {} to {}", target.display(), backup.display())
-            })?;
+            backup_file_atomically(&target, &backup)?;
             replace_file_atomically(&target.to_string_lossy(), &source_bytes)?;
             let check =
                 std::fs::read(&target).with_context(|| format!("reading {}", target.display()))?;
@@ -320,6 +311,27 @@ fn require_terminal(message: &str) -> Result<()> {
         return Err(anyhow!("{message}"));
     }
     Ok(())
+}
+
+/// Return the configured saves directory, prompting and saving it when needed.
+fn ensure_saved_dir() -> Result<PathBuf> {
+    if let Some(dir) = load_saved_dir()?.filter(|dir| dir.is_dir()) {
+        return Ok(dir);
+    }
+
+    require_terminal("no RetroArch saves directory configured; run interactively to set one")?;
+    let answer = prompt_line("Enter your RetroArch PS1 saves directory: ")?
+        .ok_or_else(|| anyhow!("no directory given; nothing changed"))?;
+    if answer.trim().is_empty() {
+        bail!("no directory given; nothing changed");
+    }
+    let dir = PathBuf::from(answer.trim());
+    if !dir.is_dir() {
+        bail!("not a directory: '{}'; nothing changed", answer.trim());
+    }
+    let saved = save_dir_config(&dir)?;
+    eprintln!("Saved saves directory to {}", saved.display());
+    Ok(dir)
 }
 
 /// Print `prompt` and read one line; `Ok(None)` on EOF.
@@ -363,6 +375,19 @@ fn copy_prefix_matches(prefix: &str, cards: &[PathBuf]) -> Vec<PathBuf> {
         })
         .cloned()
         .collect()
+}
+
+/// Resolve a copy destination, using the source basename when `dest` is a directory.
+fn resolve_copy_destination(dest: &str, source: &Path) -> Result<PathBuf> {
+    let dest_path = Path::new(dest);
+    if dest == "." || dest_path.is_dir() {
+        let file_name = source
+            .file_name()
+            .ok_or_else(|| anyhow!("copy source has no file name: {}", source.display()))?;
+        Ok(dest_path.join(file_name))
+    } else {
+        Ok(dest_path.to_path_buf())
+    }
 }
 
 /// Resolve a copy source, falling back to the saves dir for bare names.
@@ -463,6 +488,26 @@ fn write_temp_then_persist(output: &Path, data: &[u8], context: &'static str) ->
     Ok(())
 }
 
+/// Back up a card, atomically replacing a prior regular-file backup if present.
+fn backup_file_atomically(target: &Path, backup: &Path) -> Result<()> {
+    match backup.symlink_metadata() {
+        Ok(metadata) if !metadata.file_type().is_file() => {
+            bail!(
+                "backup path exists and is not a regular file: {}",
+                backup.display()
+            );
+        }
+        Ok(_) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error).with_context(|| format!("checking {}", backup.display())),
+    }
+
+    let contents = std::fs::read(target)
+        .with_context(|| format!("reading {} for backup", target.display()))?;
+    write_temp_then_persist(backup, &contents, "creating temporary backup file")
+        .with_context(|| format!("backing up {} to {}", target.display(), backup.display()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -490,5 +535,61 @@ mod tests {
         let all = cards(&["game.srm"]);
         assert!(copy_prefix_matches("GAME", &all).is_empty());
         assert_eq!(copy_prefix_matches("game", &all).len(), 1);
+    }
+
+    #[test]
+    fn cli_list_accepts_one_or_more_cards() {
+        assert!(Cli::try_parse_from(["japs1me", "list", "one.srm"]).is_ok());
+        assert!(Cli::try_parse_from(["japs1me", "list", "one.srm", "two.gme"]).is_ok());
+        assert!(Cli::try_parse_from(["japs1me", "list"]).is_err());
+    }
+
+    #[test]
+    fn cli_setup_takes_no_arguments() {
+        assert!(Cli::try_parse_from(["japs1me", "setup"]).is_ok());
+        assert!(Cli::try_parse_from(["japs1me", "setup", "extra"]).is_err());
+    }
+
+    #[test]
+    fn copy_destination_directory_uses_source_file_name() {
+        let source = Path::new("/saves/game.srm");
+        let dir = tempfile::tempdir().expect("tempdir");
+        assert_eq!(
+            resolve_copy_destination(&dir.path().to_string_lossy(), source).expect("resolves"),
+            dir.path().join("game.srm")
+        );
+        assert_eq!(
+            resolve_copy_destination(".", source).expect("resolves"),
+            PathBuf::from("./game.srm")
+        );
+    }
+
+    #[test]
+    fn copy_destination_file_path_stays_exact() {
+        let source = Path::new("/saves/game.srm");
+        assert_eq!(
+            resolve_copy_destination("/tmp/custom-name.srm", source).expect("resolves"),
+            PathBuf::from("/tmp/custom-name.srm")
+        );
+    }
+
+    #[test]
+    fn existing_backup_is_replaced_with_current_target() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let target = dir.path().join("game.srm");
+        let backup = backup_path(&target);
+        std::fs::write(&target, b"new previous card").expect("write target");
+        std::fs::write(&backup, b"older backup").expect("write old backup");
+
+        backup_file_atomically(&target, &backup).expect("replaces backup");
+
+        assert_eq!(
+            std::fs::read(&backup).expect("read backup"),
+            b"new previous card"
+        );
+        assert_eq!(
+            std::fs::read(&target).expect("read target"),
+            b"new previous card"
+        );
     }
 }
