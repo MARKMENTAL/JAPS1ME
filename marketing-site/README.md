@@ -24,11 +24,12 @@ static files.
   counters), FAQ, footer, `860px` + `480px` breakpoints,
   `prefers-reduced-motion` handling.
 - `README.md` — this file.
-- `JAPS1ME-v0.2.0-Linux-x86_64.tar.gz` + `JAPS1ME-v0.2.0-Windows-x86_64.zip`
-  — prebuilt v0.2.0 binaries served as relative `./` downloads by the
-  `#download` section. Their SHA-256 hashes are embedded in the page;
-  re-run `sha256sum` on both files after replacing them and update the
-  page + this list.
+- `JAPS1ME-v0.2.1-Linux-x86_64.tar.gz` — prebuilt v0.2.1 Linux x86_64 binary
+  served as a relative `./` download by the `#download` section (697853 B;
+  SHA-256 `a59f866237571f1a464f839d21e51236801926c0619864798baca8dd68aae68c`).
+  The older v0.2.0 Windows zip remains in this directory but is not linked;
+  add a Windows download card when a v0.2.1 build is available. Re-run
+  `sha256sum` after replacing the Linux archive and update the page + this list.
 
 ## Favicon
 
@@ -95,5 +96,5 @@ the small-screen pass: no horizontal scroll, hamburger works, tabs wrap.
 - New command tab: add a button + matching `x-show="tab === '…'"` panel
   with a `.cmd` copy row.
 - New FAQ item: copy a `.faq-item`, use the next `open === N` index.
-- Version bumps: update the hero `v0.2.0` badge, Getting Started
+- Version bumps: update the hero version badge, Getting Started
   `--version` expectation, and footer line together.

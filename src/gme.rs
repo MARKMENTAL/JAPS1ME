@@ -12,7 +12,7 @@ use anyhow::{bail, Result};
 
 /// Length of the DexDrive header prepended to the raw card image.
 pub const GME_HEADER_LEN: usize = 3904;
-/// Length of the raw card image (also the `.srm` length).
+/// Length of the raw card image (also the `.srm`/`.mcd` length).
 pub const RAW_CARD_LEN: usize = 131072;
 /// Total length of a `.gme` file.
 pub const GME_FILE_LEN: usize = GME_HEADER_LEN + RAW_CARD_LEN;
@@ -27,7 +27,7 @@ const COMMENT_LEN: usize = 256;
 pub struct GmeCard {
     /// True when the header carries the canonical `123-456-STD` magic.
     pub header_present: bool,
-    /// Per-slot comments decoded from the header (empty for `.srm`/zeroed headers).
+    /// Per-slot comments decoded from the header (empty for raw cards/zeroed headers).
     pub comments: [String; 15],
     /// The raw 131072-byte card image.
     pub raw: Vec<u8>,

@@ -1,4 +1,4 @@
-//! RetroArch saves-directory configuration and `.srm` discovery for `install`.
+//! Emulator saves-directory configuration and memory-card discovery for `copy`/`install`.
 //!
 //! The directory is stored as a single line in `./.japs1mesavedir` when
 //! present (a per-workspace override), else in `~/.config/japs1mesavedir`
@@ -7,6 +7,149 @@
 
 use anyhow::{bail, Context, Result};
 use std::path::{Path, PathBuf};
+
+/// Parsed game title plus an optional DuckStation card slot suffix.
+#[derive(Debug, Eq, PartialEq)]
+pub struct CardFileName {
+    pub game_region: String,
+    pub slot: Option<u32>,
+}
+
+/// Emulator-specific raw memory-card filename conventions.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Emulator {
+    RetroArch,
+    DuckStation,
+}
+
+impl Emulator {
+    /// File extension used for this emulator's card images, without a dot.
+    pub fn card_extension(self) -> &'static str {
+        match self {
+            Self::RetroArch => "srm",
+            Self::DuckStation => "mcd",
+        }
+    }
+
+    /// Display name for this emulator.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::RetroArch => "RetroArch",
+            Self::DuckStation => "DuckStation",
+        }
+    }
+
+    /// Render a convention-named card filename for this emulator.
+    pub fn new_card_file_name(self, game_region: &str, source_slot: Option<u32>) -> String {
+        match self {
+            Self::RetroArch => format!("{game_region}.srm"),
+            Self::DuckStation => format!("{game_region}_{}.mcd", source_slot.unwrap_or(1)),
+        }
+    }
+}
+
+/// Parse `GAMENAME (REGIONCODE)[_SLOT]` from a filename stem.
+///
+/// The final parenthesized group identifies the region, allowing earlier
+/// parenthesized suffixes such as `(Disc 1)`. Slot numbers are DuckStation's
+/// optional `_N` suffix and must be positive.
+pub fn parse_card_file_name(stem: &str) -> Result<CardFileName> {
+    let (game_region, slot) = match stem.rsplit_once('_') {
+        Some((base, suffix))
+            if !suffix.is_empty() && suffix.bytes().all(|byte| byte.is_ascii_digit()) =>
+        {
+            let slot = suffix
+                .parse::<u32>()
+                .with_context(|| format!("invalid memory-card slot suffix '_{suffix}'"))?;
+            if slot == 0 {
+                bail!("memory-card slot number must be greater than zero");
+            }
+            (base, Some(slot))
+        }
+        _ => (stem, None),
+    };
+
+    let Some(open) = game_region.rfind(" (") else {
+        bail!("filename must use 'GAMENAME (REGIONCODE)' convention");
+    };
+    let region = &game_region[open + 2..];
+    if !game_region[..open].trim().is_empty()
+        && region.ends_with(')')
+        && !region[..region.len() - 1].trim().is_empty()
+    {
+        Ok(CardFileName {
+            game_region: game_region.to_owned(),
+            slot,
+        })
+    } else {
+        bail!("filename must use 'GAMENAME (REGIONCODE)' convention");
+    }
+}
+
+/// Build the configured emulator's target path from a source filename.
+pub fn new_card_path(source: &Path, dir: &Path, emulator: Emulator) -> Result<PathBuf> {
+    let stem = source
+        .file_stem()
+        .ok_or_else(|| anyhow::anyhow!("source has no file name: {}", source.display()))?
+        .to_string_lossy();
+    let parsed = parse_card_file_name(&stem).with_context(|| {
+        format!(
+            "cannot create a new card from '{}'; rename it to 'GAMENAME (REGIONCODE).srm' or 'GAMENAME (REGIONCODE)_SLOT.mcd'",
+            source.display()
+        )
+    })?;
+    Ok(dir.join(emulator.new_card_file_name(&parsed.game_region, parsed.slot)))
+}
+
+/// Detect conventional multi-disc labels without matching unrelated words like `Discovery`.
+pub fn is_multi_disc(game_region: &str) -> bool {
+    let lower = game_region.to_ascii_lowercase();
+    for token in ["disc", "disk"] {
+        let mut rest = lower.as_str();
+        while let Some(index) = rest.find(token) {
+            let before = rest[..index].chars().next_back();
+            let suffix = &rest[index + token.len()..];
+            let after_token = suffix.trim_start();
+            let has_number = after_token
+                .chars()
+                .next()
+                .is_some_and(|ch| ch.is_ascii_digit());
+            let token_boundary = before.is_none_or(|ch| !ch.is_ascii_alphabetic());
+            if token_boundary && has_number {
+                return true;
+            }
+            let Some(next) = suffix.chars().next() else {
+                break;
+            };
+            rest = &suffix[next.len_utf8()..];
+            if rest.is_empty() {
+                break;
+            }
+        }
+    }
+    false
+}
+
+/// Infer the emulator from conventional saves-directory path components.
+///
+/// DuckStation uses a `memcards` directory or a `duckstation` component; all
+/// other configured paths are treated as RetroArch.
+pub fn detect_emulator(dir: &Path) -> Emulator {
+    if dir.components().any(|component| {
+        component
+            .as_os_str()
+            .to_string_lossy()
+            .eq_ignore_ascii_case("memcards")
+            || component
+                .as_os_str()
+                .to_string_lossy()
+                .eq_ignore_ascii_case("duckstation")
+    }) {
+        Emulator::DuckStation
+    } else {
+        Emulator::RetroArch
+    }
+}
 
 /// Config file name inside the user's config directory.
 pub const CONFIG_FILE_NAME: &str = "japs1mesavedir";
@@ -55,7 +198,7 @@ fn load_saved_dir_from(path: &Path) -> Result<Option<PathBuf>> {
     Ok(parse_saved_dir_contents(&contents))
 }
 
-/// Load the saved RetroArch saves directory, if configured.
+/// Load the saved emulator saves directory, if configured.
 ///
 /// Returns `Ok(None)` when the config file is missing or blank.
 fn load_saved_dir_in(config_dir: &Path) -> Result<Option<PathBuf>> {
@@ -86,7 +229,7 @@ fn pick_saved_dir(local: Option<PathBuf>, user: Option<PathBuf>) -> Option<PathB
     local.or(user)
 }
 
-/// Load the saved RetroArch saves directory for this user.
+/// Load the saved emulator saves directory for this user.
 ///
 /// `./.japs1mesavedir` wins over the user config so a workspace can override
 /// the default. Unresolvable user config directories (e.g. `HOME` unset on
@@ -100,7 +243,7 @@ pub fn load_saved_dir() -> Result<Option<PathBuf>> {
     Ok(pick_saved_dir(local, user))
 }
 
-/// Persist the RetroArch saves directory, creating the config directory.
+/// Persist the emulator saves directory, creating the config directory.
 fn save_dir_config_in(config_dir: &Path, dir: &Path) -> Result<PathBuf> {
     std::fs::create_dir_all(config_dir)
         .with_context(|| format!("creating {}", config_dir.display()))?;
@@ -110,7 +253,7 @@ fn save_dir_config_in(config_dir: &Path, dir: &Path) -> Result<PathBuf> {
     Ok(path)
 }
 
-/// Persist the RetroArch saves directory for this user.
+/// Persist the emulator saves directory for this user.
 ///
 /// Falls back to `./.japs1mesavedir` when no user config directory resolves
 /// (e.g. `HOME`/`XDG_CONFIG_HOME` unset on Windows).
@@ -132,8 +275,8 @@ fn save_dir_config_local_in(base: &Path, dir: &Path) -> Result<PathBuf> {
     Ok(path)
 }
 
-/// Find `.srm` files (case-insensitive) directly inside `dir`, sorted by name.
-pub fn find_srm_files(dir: &Path) -> Result<Vec<PathBuf>> {
+/// Find card files for `emulator` (case-insensitive) directly inside `dir`, sorted by name.
+pub fn find_card_files(dir: &Path, emulator: Emulator) -> Result<Vec<PathBuf>> {
     let mut cards = Vec::new();
     let entries = std::fs::read_dir(dir).with_context(|| format!("reading {}", dir.display()))?;
     for entry in entries {
@@ -144,7 +287,7 @@ pub fn find_srm_files(dir: &Path) -> Result<Vec<PathBuf>> {
         }
         if path
             .extension()
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("srm"))
+            .is_some_and(|ext| ext.eq_ignore_ascii_case(emulator.card_extension()))
         {
             cards.push(path);
         }
@@ -153,16 +296,15 @@ pub fn find_srm_files(dir: &Path) -> Result<Vec<PathBuf>> {
     Ok(cards)
 }
 
-/// Find the card whose file name exactly matches the source file name.
+/// Find the card whose stem exactly matches the source file stem.
 ///
-/// Returns the matching card path, if any. Comparison is case-sensitive so the
-/// inferred target still matches the game's basename exactly on case-sensitive
-/// filesystems. At most one entry in a directory can match.
+/// Comparing stems permits a workspace `.srm` card to match a DuckStation
+/// `.mcd` card while remaining case-sensitive. At most one entry can match.
 pub fn find_match_by_name(source: &Path, cards: &[PathBuf]) -> Option<PathBuf> {
-    let source_name = source.file_name()?;
+    let source_stem = source.file_stem()?;
     cards
         .iter()
-        .find(|card| card.file_name().is_some_and(|name| name == source_name))
+        .find(|card| card.file_stem().is_some_and(|stem| stem == source_stem))
         .cloned()
 }
 
@@ -195,9 +337,11 @@ pub fn parse_selection(input: &str, count: usize) -> Result<usize> {
     Ok(number - 1)
 }
 
-/// Backup path for an install target (`<name>.srm.japs1me-bak`).
+/// Backup path for an install target (`<name>.<ext>.japs1me-bak`).
 pub fn backup_path(target: &Path) -> PathBuf {
-    target.with_extension("srm.japs1me-bak")
+    let mut name = target.file_name().unwrap_or_default().to_os_string();
+    name.push(".japs1me-bak");
+    target.with_file_name(name)
 }
 
 #[cfg(test)]
@@ -215,14 +359,15 @@ mod tests {
     }
 
     #[test]
-    fn finds_srm_files_sorted() {
+    fn finds_emulator_cards_sorted_and_by_extension() {
         let dir = tempfile::tempdir().expect("tempdir");
         std::fs::write(dir.path().join("b.srm"), [0u8; 4]).expect("write");
         std::fs::write(dir.path().join("a.srm"), [0u8; 4]).expect("write");
         std::fs::write(dir.path().join("C.SRM"), [0u8; 4]).expect("write");
+        std::fs::write(dir.path().join("duck.mcd"), [0u8; 4]).expect("write");
         std::fs::write(dir.path().join("notes.txt"), [0u8; 4]).expect("write");
         std::fs::create_dir(dir.path().join("d.srm")).expect("mkdir");
-        let cards = find_srm_files(dir.path()).expect("scans");
+        let cards = find_card_files(dir.path(), Emulator::RetroArch).expect("scans");
         let names: Vec<_> = cards
             .iter()
             .map(|path| {
@@ -233,6 +378,8 @@ mod tests {
             })
             .collect();
         assert_eq!(names, vec!["C.SRM", "a.srm", "b.srm"]);
+        let duckstation_cards = find_card_files(dir.path(), Emulator::DuckStation).expect("scans");
+        assert_eq!(duckstation_cards, vec![dir.path().join("duck.mcd")]);
     }
 
     #[test]
@@ -261,24 +408,28 @@ mod tests {
     fn backup_path_appends_suffix() {
         let backup = backup_path(Path::new("/saves/game.srm"));
         assert_eq!(backup, PathBuf::from("/saves/game.srm.japs1me-bak"));
+        assert_eq!(
+            backup_path(Path::new("/saves/game.mcd")),
+            PathBuf::from("/saves/game.mcd.japs1me-bak")
+        );
     }
 
     #[test]
-    fn match_by_name_finds_exact_hit() {
+    fn match_by_name_finds_exact_stem_across_extensions() {
         let cards = vec![
             PathBuf::from("/saves/a.srm"),
-            PathBuf::from("/saves/game.srm"),
+            PathBuf::from("/saves/game.mcd"),
             PathBuf::from("/saves/b.srm"),
         ];
         assert_eq!(
             find_match_by_name(Path::new("/tmp/game.srm"), &cards),
-            Some(PathBuf::from("/saves/game.srm"))
+            Some(PathBuf::from("/saves/game.mcd"))
         );
     }
 
     #[test]
     fn match_by_name_misses_and_is_case_sensitive() {
-        let cards = vec![PathBuf::from("/saves/game.srm")];
+        let cards = vec![PathBuf::from("/saves/game.mcd")];
         assert_eq!(
             find_match_by_name(Path::new("/tmp/other.srm"), &cards),
             None
@@ -361,6 +512,96 @@ mod tests {
         assert_eq!(
             load_local_saved_dir_in(base.path()).expect("loads"),
             Some(PathBuf::from("/saves/ws"))
+        );
+    }
+
+    #[test]
+    fn detects_emulator_from_directory_components() {
+        assert_eq!(
+            detect_emulator(Path::new("/home/user/.local/share/duckstation/memcards")),
+            Emulator::DuckStation
+        );
+        assert_eq!(
+            detect_emulator(Path::new(
+                "/home/user/.local/share/Steam/steamapps/common/RetroArch/saves/Beetle PSX"
+            )),
+            Emulator::RetroArch
+        );
+        assert_eq!(
+            detect_emulator(Path::new("/home/user/DuckStation/MemCards")),
+            Emulator::DuckStation
+        );
+        assert_eq!(
+            detect_emulator(Path::new("/home/user/ps1-saves")),
+            Emulator::RetroArch
+        );
+    }
+
+    #[test]
+    fn parses_convention_names_and_converts_extensions() {
+        let source = parse_card_file_name("Crash Bandicoot (USA)").expect("parses");
+        assert_eq!(
+            source,
+            CardFileName {
+                game_region: "Crash Bandicoot (USA)".to_owned(),
+                slot: None,
+            }
+        );
+        assert_eq!(
+            Emulator::DuckStation.new_card_file_name(&source.game_region, source.slot),
+            "Crash Bandicoot (USA)_1.mcd"
+        );
+        let duckstation = parse_card_file_name("Final Fantasy VII (Disc 1) (USA)_2")
+            .expect("parses disc title with slot");
+        assert_eq!(duckstation.slot, Some(2));
+        assert_eq!(
+            Emulator::RetroArch.new_card_file_name(&duckstation.game_region, duckstation.slot),
+            "Final Fantasy VII (Disc 1) (USA).srm"
+        );
+        assert_eq!(
+            Emulator::DuckStation.new_card_file_name(&duckstation.game_region, duckstation.slot),
+            "Final Fantasy VII (Disc 1) (USA)_2.mcd"
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_convention_and_zero_slot() {
+        assert!(parse_card_file_name("mysaves").is_err());
+        assert!(parse_card_file_name(" (USA)").is_err());
+        assert!(parse_card_file_name("Game ()").is_err());
+        assert!(parse_card_file_name("Game (USA)_0").is_err());
+        assert!(parse_card_file_name("Game (USA)_999999999999999999999").is_err());
+    }
+
+    #[test]
+    fn detects_multi_disc_names_without_matching_discovery() {
+        assert!(is_multi_disc("Game (Disc 1) (USA)"));
+        assert!(is_multi_disc("Game [Disc2] (USA)"));
+        assert!(is_multi_disc("Game Disk 3 (USA)"));
+        assert!(!is_multi_disc("Discovery (USA)"));
+        assert!(!is_multi_disc("Game (USA)"));
+    }
+
+    #[test]
+    fn new_card_path_uses_configured_emulator_extension() {
+        let dir = Path::new("/saves");
+        assert_eq!(
+            new_card_path(
+                Path::new("Crash Bandicoot (USA).srm"),
+                dir,
+                Emulator::DuckStation
+            )
+            .expect("path"),
+            PathBuf::from("/saves/Crash Bandicoot (USA)_1.mcd")
+        );
+        assert_eq!(
+            new_card_path(
+                Path::new("Crash Bandicoot (USA)_2.mcd"),
+                dir,
+                Emulator::RetroArch
+            )
+            .expect("path"),
+            PathBuf::from("/saves/Crash Bandicoot (USA).srm")
         );
     }
 }

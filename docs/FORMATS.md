@@ -27,12 +27,23 @@ are `MC`, and reports a `missing DexDrive header magic` warning. Comments are
 decoded as Windows-1252 and are informational only; `convert` never modifies
 them.
 
-## Raw card image (`.srm`/`.mcr`)
+## Raw card image (`.srm`/`.mcd`/`.mcr`)
 
 The raw image is 131072 bytes (1024 frames of 128 bytes). RetroArch `.srm`,
-ePSXe `.mcr`, and similar formats share this layout; only the file extension
-differs. `convert` writes exactly the `.gme` payload bytes `3904..` with no
+DuckStation `.mcd`, ePSXe `.mcr`, and similar formats share this layout; only
+the file extension differs. JAPS1ME reads all of these as the same raw card
+image. `convert` writes exactly the `.gme` payload bytes `3904..` with no
 modification, so directory checksums and save data are preserved verbatim.
+
+### Per-game filenames
+
+New-card install accepts a source named `GAMENAME (REGIONCODE)` with an
+optional trailing DuckStation slot suffix. It writes `GAMENAME (REGIONCODE).srm`
+for RetroArch and `GAMENAME (REGIONCODE)_SLOT.mcd` for DuckStation (default
+slot `1`). For example, `Crash Bandicoot (USA).srm` becomes
+`Crash Bandicoot (USA)_1.mcd` in a DuckStation directory. Multi-disc title
+labels are retained; RetroArch users must manually copy and rename a card for
+the next disc, while DuckStation uses the same per-game card across discs.
 
 ### Geometry
 

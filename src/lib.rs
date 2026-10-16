@@ -1,8 +1,8 @@
 //! JAPS1ME - Just A PS1 Memory Card Editor
 //!
-//! A library for reading DexDrive (`.gme`) and raw (`.srm`/`.mcr`) PlayStation 1
-//! memory-card images, with support for converting `.gme` files to RetroArch
-//! `.srm` format.
+//! A library for reading DexDrive (`.gme`) and raw (`.srm`/`.mcd`/`.mcr`)
+//! PlayStation 1 memory-card images, with support for converting `.gme` files
+//! to raw card format.
 
 pub mod commands;
 pub mod gme;
