@@ -27,9 +27,10 @@ static files.
 - `JAPS1ME-v0.2.1-Linux-x86_64.tar.gz` — prebuilt v0.2.1 Linux x86_64 binary
   served as a relative `./` download by the `#download` section (697853 B;
   SHA-256 `a59f866237571f1a464f839d21e51236801926c0619864798baca8dd68aae68c`).
-  The older v0.2.0 Windows zip remains in this directory but is not linked;
-  add a Windows download card when a v0.2.1 build is available. Re-run
-  `sha256sum` after replacing the Linux archive and update the page + this list.
+- `JAPS1ME-v0.2.1-Windows-x86_64.zip` — prebuilt v0.2.1 Windows x86_64 binary
+  served as a relative `./` download by the `#download` section (1115592 B;
+  SHA-256 `d97c0de7d4dd059d21d59cafb78f19bc97e225d100002b56cbc36b3817e30d26`).
+  Re-run `sha256sum` after replacing either archive and update the page + this list.
 
 ## Favicon
 

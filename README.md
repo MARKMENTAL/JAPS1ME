@@ -32,6 +32,24 @@ cargo build --release
 
 The executable is created at `target/release/japs1me`.
 
+### Cross-compiling a Windows build from Linux
+
+Install the Rust GNU Windows target and MinGW-w64 linker tools:
+
+```sh
+rustup target add x86_64-pc-windows-gnu
+sudo apt install g++-mingw-w64-x86-64
+```
+
+The repository's `.cargo/config.toml` selects `x86_64-w64-mingw32-gcc` as the
+linker. Build the release executable with:
+
+```sh
+cargo build --release --target x86_64-pc-windows-gnu
+```
+
+The Windows executable is `target/x86_64-pc-windows-gnu/release/japs1me.exe`.
+
 ## Usage
 
 | Command | Purpose |

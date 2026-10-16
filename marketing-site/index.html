@@ -96,7 +96,7 @@ Free: 9 of 15 slots</code></pre>
     <section id="download" class="section section-alt">
       <div class="wrap" x-data="{ copied: '' }">
         <h2>Download</h2>
-        <p class="section-sub">Download the v0.2.1 Linux x86_64 binary below. Verify its SHA-256 checksum before running.</p>
+        <p class="section-sub">Download the v0.2.1 Linux or Windows x86_64 binary below. Verify its SHA-256 checksum before running.</p>
         <div class="download-cards">
           <article class="dl-card">
             <p><span class="os-badge linux">Linux x86_64</span></p>
@@ -106,6 +106,15 @@ Free: 9 of 15 slots</code></pre>
             <p class="dl-label">SHA-256</p>
             <div class="cmd"><code>a59f866237571f1a464f839d21e51236801926c0619864798baca8dd68aae68c</code><button @click="navigator.clipboard.writeText('a59f866237571f1a464f839d21e51236801926c0619864798baca8dd68aae68c').then(() => { copied = 'linux'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'linux' ? 'Copied!' : 'Copy'"></button></div>
             <p class="dl-verify">Verify: <code>sha256sum JAPS1ME-v0.2.1-Linux-x86_64.tar.gz</code></p>
+          </article>
+          <article class="dl-card">
+            <p><span class="os-badge windows">Windows x86_64</span></p>
+            <h3>JAPS1ME v0.2.1</h3>
+            <p class="dl-meta"><code>JAPS1ME-v0.2.1-Windows-x86_64.zip</code> · 1115592 B (1.1 MiB)</p>
+            <p><a class="btn btn-secondary" href="./JAPS1ME-v0.2.1-Windows-x86_64.zip" download>Download .zip</a></p>
+            <p class="dl-label">SHA-256</p>
+            <div class="cmd"><code>d97c0de7d4dd059d21d59cafb78f19bc97e225d100002b56cbc36b3817e30d26</code><button @click="navigator.clipboard.writeText('d97c0de7d4dd059d21d59cafb78f19bc97e225d100002b56cbc36b3817e30d26').then(() => { copied = 'windows'; setTimeout(() => copied = '', 1500); })" x-text="copied === 'windows' ? 'Copied!' : 'Copy'"></button></div>
+            <p class="dl-verify">Verify: <code>certutil -hashfile JAPS1ME-v0.2.1-Windows-x86_64.zip SHA256</code></p>
           </article>
         </div>
       </div>
